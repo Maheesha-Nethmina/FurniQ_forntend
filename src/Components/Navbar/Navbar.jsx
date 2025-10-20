@@ -1,12 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { User, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { User, X, Menu } from "lucide-react";
+import axios from "axios";
+
+const API_URL = "http://localhost:8080/api/auth";
 
 const Navbar = () => {
+  const NAV_LINKS = [
+    { label: "Home", path: "/" },
+    { label: "Furniture", path: "/furniture" },
+    { label: "Home Deco", path: "/homedeco" },
+    { label: "About Us", path: "/about" },
+    { label: "Contact Us", path: "/contact" },
+  ];
+
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModal, setAuthModal] = useState(null); // "login" | "register" | null
+
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    mobileNumber: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -14,29 +36,116 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
+ 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest(".profile-dropdown")) {
-        setDropdownOpen(false);
-      }
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
+  }, [mobileMenuOpen]);
+
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".profile-dropdown")) setDropdownOpen(false);
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+ 
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setMessage("");
+
+    try {
+      if (authModal === "register") {
+        // check password match before backend call
+        if (formData.password !== formData.confirmPassword) {
+          setMessage("Passwords do not match!");
+          setLoading(false);
+          return;
+        }
+
+        const res = await axios.post(`${API_URL}/register`, {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          mobileNumber: formData.mobileNumber,
+        });
+
+        setMessage(res.data.message || "Registration successful!");
+      } else if (authModal === "login") {
+        const res = await axios.post(`${API_URL}/login`, {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        setMessage(res.data.message || "Login successful!");
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userEmail", res.data.email);
+      }
+
+      // reset form and close modal after success
+      setTimeout(() => {
+        setAuthModal(null);
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          mobileNumber: "",
+        });
+        setMessage("");
+      }, 1200);
+    } catch (err) {
+      setMessage(
+        err.response?.data?.error ||
+          "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderLinks = (isMobile = false) => (
+    <ul
+      className={`${
+        isMobile
+          ? "flex flex-col space-y-6 mt-8 text-center font-serif uppercase tracking-wide text-lg"
+          : "hidden md:flex space-x-10 text-sm font-serif uppercase tracking-wide"
+      }`}
+    >
+      {NAV_LINKS.map(({ label, path }) => (
+        <li
+          key={label}
+          className={
+            isMobile
+              ? "hover:text-amber-400 transition-all duration-300"
+              : "relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300"
+          }
+        >
+          <Link to={path} onClick={() => setMobileMenuOpen(false)}>
+            {label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <>
-      {/*  Navbar  */}
+      {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           scrolled
-            ? "backdrop-blur-xl bg-gray-900/70 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-b border-white/10"
+            ? "backdrop-blur-xl bg-gray-900/80 shadow-lg border-b border-white/10"
             : "bg-gradient-to-r from-gray-900 via-black to-gray-900"
         }`}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-8 py-4 text-white">
-          {/* Logo */}
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 text-white">
           <Link to="/">
             <h1 className="text-3xl font-extrabold tracking-tight font-[Poppins] cursor-pointer">
               <span className="text-white">Furni</span>
@@ -44,150 +153,178 @@ const Navbar = () => {
             </h1>
           </Link>
 
-          {/* Menu Items */}
-          <ul className="hidden md:flex space-x-10 text-sm font-serif uppercase tracking-wide">
-            <li className="relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300">
-              <Link to="/">Home</Link>
-            </li>
-            <li className="relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300">
-              <Link to="/furniture">Furniture</Link>
-            </li>
-            <li className="relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300">
-              <Link to="/homedeco">Home Deco</Link>
-            </li>
-            <li className="relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300">
-              <Link to="/about">About Us</Link>
-            </li>
-            <li className="relative cursor-pointer transition-all duration-300 hover:opacity-80 after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:w-0 after:h-[1px] after:bg-white/70 hover:after:w-full after:transition-all after:duration-300">
-              <Link to="/contact">Contact Us</Link>
-            </li>
-          </ul>
+          {renderLinks()}
 
-          {/* Profile Icon + Dropdown */}
-          <div className="relative profile-dropdown">
-            <div
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="p-2 bg-white/10 border border-white/20 rounded-full hover:bg-white/20 transition-all duration-300 cursor-pointer shadow-md backdrop-blur-sm"
-            >
-              <User className="w-5 h-5 text-white" />
+          <div className="flex items-center space-x-4">
+            <div className="relative profile-dropdown">
+              <div
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="p-2 bg-white/10 border border-white/20 rounded-full hover:bg-white/20 transition-all duration-300 cursor-pointer shadow-md backdrop-blur-sm"
+              >
+                <User className="w-5 h-5 text-white" />
+              </div>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-3 w-44 bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-lg py-2 animate-fadeIn">
+                  <button
+                    onClick={() => {
+                      setAuthModal("login");
+                      setDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAuthModal("register");
+                      setDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
+                  >
+                    Register
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Dropdown Menu */}
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-3 w-44 bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-lg py-2 animate-fadeIn">
-                <button
-                  onClick={() => {
-                    setShowLogin(true);
-                    setDropdownOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRegister(true);
-                    setDropdownOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
-                >
-                  Register
-                </button>
-              </div>
-            )}
+            <button
+              className="md:hidden p-2 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu />
+            </button>
           </div>
         </div>
       </nav>
 
-      {/*  Login Modal  */}
-      {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-gray-900 text-white rounded-xl w-120 p-6 relative shadow-lg">
-            <button
-              onClick={() => setShowLogin(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-400"
-            >
-              <X />
-            </button>
-            <h2 className="text-2xl font-bold mb-4 flex items-center justify-center">Login</h2>
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
-            />
-            <button className="w-full bg-amber-400 text-black py-2 rounded font-semibold hover:opacity-90 transition">
-              Login
-            </button>
-            <p className="mt-4 text-sm text-gray-300 text-center">
-              Don't have an account?{" "}
-              <span
-                className="text-amber-400 cursor-pointer hover:underline"
-                onClick={() => {
-                  setShowLogin(false);
-                  setShowRegister(true);
-                }}
-              >
-                Register
-              </span>
-            </p>
-          </div>
+      {/* Mobile Menu */}
+      <div
+        className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-gray-900 text-white z-[60] transform transition-transform duration-500 ${
+          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <h2 className="text-2xl font-bold">
+            <span className="text-white">Furni</span>
+            <span className="text-amber-400">Q</span>
+          </h2>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 rounded-full hover:bg-white/10 transition"
+          >
+            <X />
+          </button>
         </div>
+        {renderLinks(true)}
+      </div>
+
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[50]"
+          onClick={() => setMobileMenuOpen(false)}
+        />
       )}
 
-      {/* Register Modal  */}
-      {showRegister && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-gray-900 text-white rounded-xl w-120 p-6 relative shadow-lg">
+      {/* Auth Modal */}
+      {authModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50">
+          <div className="bg-gray-900 text-white rounded-xl w-96 p-6 relative shadow-lg">
             <button
-              onClick={() => setShowRegister(false)}
+              onClick={() => setAuthModal(null)}
               className="absolute top-3 right-3 text-white hover:text-gray-400"
             >
               <X />
             </button>
-            <h2 className="text-2xl font-bold mb-4 flex items-center justify-center">Register</h2>
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
-            />
+
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              {authModal === "login" ? "Login" : "Register"}
+            </h2>
+
+            {authModal === "register" && (
+              <>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Full Name"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
+                />
+                <input
+                  type="text"
+                  name="mobileNumber"
+                  placeholder="Phone Number"
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
+                />
+              </>
+            )}
+
             <input
               type="email"
+              name="email"
               placeholder="Email"
-              className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
-            />
-            <input
-              type="text"
-              placeholder="Phone Number"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
             />
             <input
               type="password"
+              name="password"
               placeholder="Password"
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full mb-3 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
             />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
-            />
-            <button className="w-full bg-amber-400 text-black py-2 rounded font-semibold hover:opacity-90 transition">
-              Register
+
+            {authModal === "register" && (
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full mb-4 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400"
+              />
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-amber-400 text-black py-2 rounded font-semibold hover:opacity-90 transition"
+            >
+              {loading
+                ? "Please wait..."
+                : authModal === "login"
+                ? "Login"
+                : "Register"}
             </button>
+
+            {message && (
+              <p
+                className={`mt-3 text-center text-sm ${
+                  message.includes("❌") || message.includes("⚠️")
+                    ? "text-red-400"
+                    : "text-amber-400"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+
             <p className="mt-4 text-sm text-gray-300 text-center">
-              Already have an account?{" "}
+              {authModal === "login"
+                ? "Don’t have an account?"
+                : "Already have an account?"}{" "}
               <span
                 className="text-amber-400 cursor-pointer hover:underline"
-                onClick={() => {
-                  setShowRegister(false);
-                  setShowLogin(true);
-                }}
+                onClick={() =>
+                  setAuthModal(authModal === "login" ? "register" : "login")
+                }
               >
-                Login
+                {authModal === "login" ? "Register" : "Login"}
               </span>
             </p>
           </div>

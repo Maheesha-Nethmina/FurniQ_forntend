@@ -5,7 +5,9 @@ function Homedeco() {
   return (
     <>
     <Navbar/>
-        
+        <div>
+        <h1>This is Home Deco Page</h1>
+        </div>
     </>
   )
 }

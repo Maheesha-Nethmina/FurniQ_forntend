@@ -5,6 +5,11 @@ function Contact() {
   return (
     <>
       <Navbar/>
+      <div>
+        <h1>
+          This is Contact us Page
+        </h1>
+      </div>
     </>
   )
 }
