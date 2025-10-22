@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { User, X, Menu } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { User, X, Menu, ShoppingCart } from "lucide-react";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 const API_URL = "http://localhost:8080/api/auth";
 
@@ -17,7 +18,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [authModal, setAuthModal] = useState(null); // "login" | "register" | null
+  const [authModal, setAuthModal] = useState(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -30,17 +31,18 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const { user, login, logout } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
- 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
   }, [mobileMenuOpen]);
-
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -50,11 +52,9 @@ const Navbar = () => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
- 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -62,7 +62,6 @@ const Navbar = () => {
 
     try {
       if (authModal === "register") {
-        // check password match before backend call
         if (formData.password !== formData.confirmPassword) {
           setMessage("Passwords do not match!");
           setLoading(false);
@@ -76,7 +75,26 @@ const Navbar = () => {
           mobileNumber: formData.mobileNumber,
         });
 
+        // --- THIS IS THE NEW AUTO-LOGIN LOGIC ---
         setMessage(res.data.message || "Registration successful!");
+
+        // 1. Immediately log the user in with the response data
+        login(res.data);
+
+        // 2. Close the modal and reset the form
+        setTimeout(() => {
+          setAuthModal(null); // Close modal
+          setFormData({
+            username: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            mobileNumber: "",
+          });
+          setMessage("");
+        }, 1200);
+        // --- END OF MODIFICATION ---
+
       } else if (authModal === "login") {
         const res = await axios.post(`${API_URL}/login`, {
           email: formData.email,
@@ -84,22 +102,28 @@ const Navbar = () => {
         });
 
         setMessage(res.data.message || "Login successful!");
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("userEmail", res.data.email);
-      }
 
-      // reset form and close modal after success
-      setTimeout(() => {
-        setAuthModal(null);
-        setFormData({
-          username: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          mobileNumber: "",
-        });
-        setMessage("");
-      }, 1200);
+        //Use our context to log the user in
+        login(res.data);
+
+        // Check the role and redirect if admin
+        if (res.data.role === "ADMIN") {
+          navigate("/admin");
+        }
+
+        // reset form and close modal after success
+        setTimeout(() => {
+          setAuthModal(null);
+          setFormData({
+            username: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            mobileNumber: "",
+          });
+          setMessage("");
+        }, 1200);
+      }
     } catch (err) {
       setMessage(
         err.response?.data?.error ||
@@ -135,6 +159,12 @@ const Navbar = () => {
     </ul>
   );
 
+  const handleLogout = () => {
+    logout();
+    setDropdownOpen(false);
+    navigate("/");
+  };
+
   return (
     <>
       {/* Navbar */}
@@ -156,6 +186,16 @@ const Navbar = () => {
           {renderLinks()}
 
           <div className="flex items-center space-x-4">
+            {/* Cart Icon Link */}
+            {user && user.role === "USER" && (
+              <Link
+                to="/cart"
+                className="p-2 bg-white/10 border border-white/20 rounded-full hover:bg-white/20 transition-all duration-300 shadow-md backdrop-blur-sm"
+              >
+                <ShoppingCart className="w-5 h-5 text-white" />
+              </Link>
+            )}
+
             <div className="relative profile-dropdown">
               <div
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -166,24 +206,55 @@ const Navbar = () => {
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-3 w-44 bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-lg py-2 animate-fadeIn">
-                  <button
-                    onClick={() => {
-                      setAuthModal("login");
-                      setDropdownOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAuthModal("register");
-                      setDropdownOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
-                  >
-                    Register
-                  </button>
+                  {user ? (
+                    <>
+                      {user.role === "ADMIN" ? (
+                        <Link
+                          to="/admin"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300 text-sm truncate font-bold text-amber-400"
+                        >
+                          ADMIN
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/profile"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300 text-sm truncate"
+                        >
+                          {user.username}
+                        </Link>
+                      )}
+
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setAuthModal("login");
+                          setDropdownOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
+                      >
+                        Login
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAuthModal("register");
+                          setDropdownOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-white/10 transition-all duration-300"
+                      >
+                        Register
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -305,9 +376,9 @@ const Navbar = () => {
             {message && (
               <p
                 className={`mt-3 text-center text-sm ${
-                  message.includes("❌") || message.includes("⚠️")
-                    ? "text-red-400"
-                    : "text-amber-400"
+                  message.includes("successful")
+                    ? "text-amber-400"
+                    : "text-red-400"
                 }`}
               >
                 {message}
@@ -320,9 +391,10 @@ const Navbar = () => {
                 : "Already have an account?"}{" "}
               <span
                 className="text-amber-400 cursor-pointer hover:underline"
-                onClick={() =>
-                  setAuthModal(authModal === "login" ? "register" : "login")
-                }
+                onClick={() => {
+                  setAuthModal(authModal === "login" ? "register" : "login");
+                  setMessage("");
+                }}
               >
                 {authModal === "login" ? "Register" : "Login"}
               </span>

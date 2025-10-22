@@ -1,16 +1,16 @@
 import React from 'react'
 import Navbar from '../../Components/Navbar/Navbar'
 
-function AdminDashBoard() {
+function Cart() {
   return (
     <>
     <Navbar/>
     <div>
-        <h1>This is Admin Dashboard</h1>
+        <h1>This is User Cart Page</h1>
     </div>
-        
+       
     </>
   )
 }
 
-export default AdminDashBoard
+export default Cart
