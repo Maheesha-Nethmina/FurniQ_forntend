@@ -3,8 +3,14 @@ import { useState, useEffect } from "react";
 import img01 from "../../assets/image01.jpg";
 import img02 from "../../assets/image02.jpg";
 import img03 from "../../assets/image05.jpg";
+import img04 from "../../assets/image06.webp";
+import img05 from "../../assets/image07.webp";
+import img06 from "../../assets/image08.webp";
 
-const images = [img01, img02, img03];
+
+
+
+const images = [img04,img02, img05, img06];
 
 export default function Mainhero_section() {
   const [current, setCurrent] = useState(0);
