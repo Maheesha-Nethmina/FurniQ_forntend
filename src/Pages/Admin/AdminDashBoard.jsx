@@ -1,12 +1,15 @@
 import React from 'react'
 import Navbar from '../../Components/Navbar/Navbar'
+import AdminNavbar from '../../Components/Navbar/Adminnavbar'
 
 function AdminDashBoard() {
   return (
     <>
     <Navbar/>
+    <AdminNavbar/>
     <div>
-        <h1>This is Admin Dashboard</h1>
+        
+        
     </div>
         
     </>

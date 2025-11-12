@@ -11,7 +11,10 @@ import Contact from './Pages/User/Contact'
 import Profile from './Pages/User/Profile'
 import Cart from './Pages/User/Cart'
 
-import AdminDashboard from './Pages/Admin/AdminDashboard'
+import AdminDashboard from './Pages/Admin/AdminDashBoard'
+import Oder_Furniture from './Pages/Admin/Oder_Furniture'
+import Oder_Homedeco from './Pages/Admin/Oder_Homedeco'
+import AddItem from './Pages/Admin/AddItem'
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
             <Route path='/cart' element={<Cart />} />
             
             <Route path='/admin' element={<AdminDashboard />} />
+            <Route path='/order-furniture' element={<Oder_Furniture />} />
+            <Route path='/order-homedeco' element={<Oder_Homedeco />} />
+            <Route path='/add-item' element={<AddItem />} />
 
           </Routes>
         </BrowserRouter>
