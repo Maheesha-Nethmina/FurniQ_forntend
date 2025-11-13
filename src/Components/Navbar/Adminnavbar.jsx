@@ -1,37 +1,30 @@
 import React from 'react';
-// 1. Import Link and useLocation from react-router-dom
 import { Link, useLocation } from 'react-router-dom';
-
-// 2. Import the icons
 import {
   LayoutDashboard,
   Armchair,
   Lamp,
-  PackagePlus
+  PackagePlus,
+  Wand2 // 1. Imported a new icon for 'Add Deco'
 } from 'lucide-react';
-
-// --- AdminNavbar Component Code ---
-// I've moved the AdminNavbar code inside this file to fix the import error.
 
 const navLinks = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-  { name: 'Order Furniture', icon: Armchair, path: '/order-furniture' },
-  { name: 'Order Home Deco', icon: Lamp, path: '/order-homedeco' },
-  { name: 'Add Item', icon: PackagePlus, path: '/add-item' },
+  { name: 'Furniture Orders', icon: Armchair, path: '/order-furniture' },
+  { name: 'Home Deco Orders', icon: Lamp, path: '/order-homedeco' },
+  { name: 'Add New Furnitures', icon: PackagePlus, path: '/add-item' },
+  { name: 'Add New Deco', icon: Wand2, path: '/add-deco' }, 
 ];
 
-/**
- * This is the AdminNavbar component.
- * It's now inside the same file as AdminDashBoard.
- */
 function AdminNavbar() {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen w-72 flex-col bg-gray-900 rounded-r-2xl shadow-xl pt-28">
+    <div className="sticky top-16 flex h-[calc(100vh-4rem)] w-64 flex-col bg-gray-900 shadow-xl">
       <nav className="pt-8 flex-1 flex-col p-4 space-y-2">
         {navLinks.map((link) => {
-          const Icon = link.icon;
+          // This line will no longer be undefined
+          const Icon = link.icon; 
           const isActive = location.pathname === link.path;
           
           return (
@@ -47,8 +40,9 @@ function AdminNavbar() {
                 }
               `}
             >
-              <Icon size={22} />
-              <span className="font-medium text-lg">{link.name}</span>
+              {/* This will now render correctly */}
+              <Icon size={20} /> 
+              <span className="font-medium text-base">{link.name}</span>
             </Link>
           );
         })}

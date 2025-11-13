@@ -15,6 +15,7 @@ import AdminDashboard from './Pages/Admin/AdminDashBoard'
 import Oder_Furniture from './Pages/Admin/Oder_Furniture'
 import Oder_Homedeco from './Pages/Admin/Oder_Homedeco'
 import AddItem from './Pages/Admin/AddItem'
+import AddDeco from './Pages/Admin/AddDeco'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path='/order-furniture' element={<Oder_Furniture />} />
             <Route path='/order-homedeco' element={<Oder_Homedeco />} />
             <Route path='/add-item' element={<AddItem />} />
+            <Route path='/add-deco' element={<AddDeco />} />
 
           </Routes>
         </BrowserRouter>
