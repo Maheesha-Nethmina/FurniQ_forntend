@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { UploadCloud, CheckCircle, AlertTriangle } from 'lucide-react';
 
-
 import Navbar from '../../Components/Navbar/Navbar';
 import AdminNavbar from '../../Components/Navbar/Adminnavbar';
-
 
 const furnitureTypes = [
   "Living Room",
@@ -27,15 +25,13 @@ function AddItem() {
     price: '',
   });
 
-  // Separate state for the image file
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // State for loading and messages
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
-  // Handler for text/number/select inputs
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -44,62 +40,75 @@ function AddItem() {
     }));
   };
 
-  // Handler for file input
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      // Create a URL for image preview
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  // Function to pass data to the backend
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
     setLoading(true);
     setMessage({ type: '', content: '' });
 
-    // 1. We must use FormData because we are sending a file
-    const data = new FormData();
-    data.append('name', formData.name);
-    data.append('type', formData.type);
-    data.append('description', formData.description);
-    data.append('quantity', formData.quantity);
-    data.append('size', formData.size);
-    data.append('price', formData.price);
-    data.append('image', imageFile); // 'image' should match your backend's field name
+    if (!imageFile) {
+      setMessage({ type: 'error', content: 'Please select an image.' });
+      setLoading(false);
+      return;
+    }
 
     try {
-      // 2. Send the data to your backend API endpoint
-      // !!! IMPORTANT: Replace this URL with your actual backend endpoint !!!
-      const response = await axios.post('http://localhost:8080/api/furniture/add', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          // You might need an auth token here, e.g.:
-          // 'Authorization': `Bearer ${yourAuthToken}`
-        }
-      });
+      const furnitureData = {
+        furnitureName: formData.name,
+        furnitureDetails: formData.description,
+        furnitureType: formData.type,
+        furniturePrice: formData.price.toString(), 
+        furnitureSize: formData.size,
+        quantity: parseInt(formData.quantity) 
+      };
 
-      // 3. Handle success
-      setMessage({ type: 'success', content: 'Item added successfully!' });
-      // Reset form
-      setFormData({
-        name: '', type: furnitureTypes[0], description: '',
-        quantity: '', size: '', price: '',
-      });
-      setImageFile(null);
-      setImagePreview(null);
+     
+      const data = new FormData();
       
-      // Optionally, scroll to top to see message
-      window.scrollTo(0, 0);
+     
+      data.append('file', imageFile);
+
+      
+      data.append('data', JSON.stringify(furnitureData));
+
+     
+      const response = await axios.post(
+        'http://localhost:8080/api/v1/furniture/saveNewfurniture', 
+        data, 
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+
+      if (response.data.code === "00") {
+        setMessage({ type: 'success', content: 'Item added successfully!' });
+        
+        setFormData({
+          name: '', type: furnitureTypes[0], description: '',
+          quantity: '', size: '', price: '',
+        });
+        setImageFile(null);
+        setImagePreview(null);
+        
+        window.scrollTo(0, 0);
+      } else {
+         setMessage({ type: 'error', content: response.data.message || 'Failed to add item.' });
+      }
 
     } catch (error) {
-      // 4. Handle error
       console.error('Error adding item:', error);
       setMessage({
         type: 'error',
-        content: error.response?.data?.message || 'Failed to add item. Please try again.'
+        content: error.response?.data?.message || 'Failed to connect to server.'
       });
     } finally {
       setLoading(false);

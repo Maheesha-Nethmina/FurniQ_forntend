@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // Make sure you have axios installed: npm install axios
+import axios from 'axios';
 import { UploadCloud, CheckCircle, AlertTriangle, Package } from 'lucide-react';
 
-// Import your layout components (paths must be correct for your project)
-import Navbar from '../../Components/Navbar/Navbar';
-import AdminNavbar from '../../Components/Navbar/AdminNavbar'; // Corrected case-sensitive import
+// FIXED PATHS: The previous path was causing compilation errors.
+// These paths are adjusted to match standard project structure.
+import Navbar from '../../Components/Navbar/Navbar'; 
+import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
 
 function AddDeco() {
   // State for all text/number inputs
@@ -13,6 +14,8 @@ function AddDeco() {
     description: '',
     size: '',
     price: '',
+    // ADDED: Quantity field
+    quantity: '', 
   });
 
   // Separate state for the image file
@@ -22,6 +25,9 @@ function AddDeco() {
   // State for loading and messages
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
+  
+  // Define the API URL once
+  const API_URL = 'http://localhost:8080/api/v1/homedeco/saveHomedeco';
 
   // Handler for text/number/select inputs
   const handleInputChange = (e) => {
@@ -53,42 +59,66 @@ function AddDeco() {
     setLoading(true);
     setMessage({ type: '', content: '' });
 
-    const data = new FormData();
-    data.append('name', formData.name);
-    data.append('description', formData.description);
-    data.append('size', formData.size);
-    data.append('price', formData.price);
-    data.append('image', imageFile); // 'image' should match your backend's field name
-
+    if (!imageFile) {
+      setMessage({ type: 'error', content: 'Please select an item image.' });
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // !!! IMPORTANT: Replace this URL with your actual backend endpoint for deco items !!!
-      const response = await axios.post('http://localhost:8080/api/deco/add', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          // 'Authorization': `Bearer ${yourAuthToken}` // Add auth if needed
-        }
-      });
+      // 1. Prepare the JSON Data Object (Mapping frontend state to Backend DTO keys)
+      const decoData = {
+        decoName: formData.name,
+        decoDetails: formData.description,
+        decoPrice: formData.price.toString(),
+        decoSize: formData.size,
+        // UPDATED: Sending quantity as an Integer
+        quantity: parseInt(formData.quantity) 
+      };
 
-      // Handle success
-      setMessage({ type: 'success', content: 'Deco item added successfully!' });
-      // Reset form
-      setFormData({
-        name: '', description: '', size: '', price: '',
-      });
-      setImageFile(null);
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      setImagePreview(null);
+      // 2. Create FormData
+      const data = new FormData();
       
-      window.scrollTo(0, 0);
+      // Part 1: The File (Key must be 'file')
+      data.append('file', imageFile);
+      
+      // Part 2: The Data (Key must be 'data')
+      data.append('data', JSON.stringify(decoData));
+
+      // 3. Send the request
+      const response = await axios.post(
+        API_URL, // Using the defined API_URL constant
+        data, 
+        {
+          headers: {
+            // This header is essential for sending files
+            'Content-Type': 'multipart/form-data', 
+          }
+        }
+      );
+
+      // 4. Handle success (Assuming VarList.RSP_SUCCESS is "00")
+      if (response.data.code === "00") {
+        setMessage({ type: 'success', content: 'Deco item added successfully!' });
+        
+        // Reset form
+        setFormData({ name: '', description: '', size: '', price: '', quantity: '' });
+        setImageFile(null);
+        if (imagePreview) { URL.revokeObjectURL(imagePreview); }
+        setImagePreview(null);
+        
+        window.scrollTo(0, 0);
+      } else {
+         // Handle logical errors (e.g., duplicate name)
+         setMessage({ type: 'error', content: response.data.message || 'Failed to add item. A duplicate item may exist.' });
+      }
 
     } catch (error) {
-      // Handle error
-      console.error('Error adding deco item:', error);
+      // Handle network or server errors
+      console.error('Error adding deco item:', error.response?.data || error.message);
       setMessage({
         type: 'error',
-        content: error.response?.data?.message || 'Failed to add deco item. Please try again.'
+        content: error.response?.data?.message || 'Failed to connect to server. Check logs/CORS settings.'
       });
     } finally {
       setLoading(false);
@@ -152,7 +182,7 @@ function AddDeco() {
                       className="w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-teal-500 focus:ring-teal-500"
                     />
                   </div>
-
+                  
                   {/* Price */}
                   <div className="md:col-span-1">
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -171,8 +201,25 @@ function AddDeco() {
                     />
                   </div>
 
-                  {/* Size */}
+                  {/* ADDED: Quantity Input */}
                   <div className="md:col-span-1">
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity (Stock)
+                    </label>
+                    <input
+                      type="number"
+                      id="quantity"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      required
+                      min="1"
+                      className="w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  {/* Size */}
+                  <div className="md:col-span-2">
                     <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
                       Size (e.g., H: 30cm)
                     </label>
@@ -204,7 +251,7 @@ function AddDeco() {
                   </div>
                 </div>
 
-                {/* --- Image Upload (Inside the same card) --- */}
+                {/* --- Image Upload --- */}
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Item Image
@@ -235,7 +282,8 @@ function AddDeco() {
                     />
                   </label>
                 </div>
-                {/* --- Submit Button (Right Aligned) --- */}
+                
+                {/* --- Submit Button --- */}
                 <div className="flex justify-end pt-6">
                     <button
                     type="submit"
@@ -248,7 +296,6 @@ function AddDeco() {
                 </div>
 
               </div>
-
               
             </form>
           </div>
