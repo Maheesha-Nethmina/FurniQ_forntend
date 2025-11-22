@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, X, Menu, ShoppingCart } from "lucide-react";
-import axios from "axios";
+// 1. Import the centralized API config instead of axios
 import { useAuth } from "../../context/AuthContext";
+import api from '../../api/axiosConfig';
 
-const API_URL = "http://localhost:8080/api/auth";
+// 2. Removed the hardcoded API_URL constant
 
 const Navbar = () => {
   const NAV_LINKS = [
@@ -56,6 +57,9 @@ const Navbar = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  //check the url
+  console.log("Current Base URL:", import.meta.env.VITE_API_BASE_URL);
+
   const handleSubmit = async () => {
     setLoading(true);
     setMessage("");
@@ -68,22 +72,21 @@ const Navbar = () => {
           return;
         }
 
-        const res = await axios.post(`${API_URL}/register`, {
+        const res = await api.post('/auth/register', {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           mobileNumber: formData.mobileNumber,
         });
 
-        // --- THIS IS THE NEW AUTO-LOGIN LOGIC ---
         setMessage(res.data.message || "Registration successful!");
 
-        // 1. Immediately log the user in with the response data
+        // Auto-login the user
         login(res.data);
 
-        // 2. Close the modal and reset the form
+        // Close modal
         setTimeout(() => {
-          setAuthModal(null); // Close modal
+          setAuthModal(null);
           setFormData({
             username: "",
             email: "",
@@ -93,25 +96,25 @@ const Navbar = () => {
           });
           setMessage("");
         }, 1200);
-        // --- END OF MODIFICATION ---
 
       } else if (authModal === "login") {
-        const res = await axios.post(`${API_URL}/login`, {
+        
+        const res = await api.post('/auth/login', {
           email: formData.email,
           password: formData.password,
         });
 
         setMessage(res.data.message || "Login successful!");
 
-        //Use our context to log the user in
+        // Login the user
         login(res.data);
 
-        // Check the role and redirect if admin
+        // Check role and navigate
         if (res.data.role === "ADMIN") {
           navigate("/admin");
         }
 
-        // reset form and close modal after success
+        // Close modal
         setTimeout(() => {
           setAuthModal(null);
           setFormData({
@@ -125,10 +128,9 @@ const Navbar = () => {
         }, 1200);
       }
     } catch (err) {
-      setMessage(
-        err.response?.data?.error ||
-          "Something went wrong. Please try again."
-      );
+      // Handle errors gracefully
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || "Something went wrong. Please try again.";
+      setMessage(errorMsg);
     } finally {
       setLoading(false);
     }

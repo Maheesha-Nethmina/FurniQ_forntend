@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { UploadCloud, CheckCircle, AlertTriangle } from 'lucide-react';
 
 import Navbar from '../../Components/Navbar/Navbar';
-import AdminNavbar from '../../Components/Navbar/Adminnavbar'; // keep as-is if file name matches
+import AdminNavbar from '../../Components/Navbar/Adminnavbar';
+import api from '../../api/axiosConfig';
 
 const furnitureTypes = [
   "Living Room",
@@ -74,8 +74,8 @@ function AddItem() {
       data.append('file', imageFile);
       data.append('data', JSON.stringify(furnitureData));
 
-      const response = await axios.post(
-        'http://localhost:8080/api/v1/furniture/saveNewfurniture',
+      const response = await api.post(
+        '/furniture/saveNewfurniture',
         data,
         {
           headers: { 'Content-Type': 'multipart/form-data' }

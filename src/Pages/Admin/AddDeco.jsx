@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { UploadCloud, CheckCircle, AlertTriangle, Package } from 'lucide-react';
+import api from '../../api/axiosConfig';
 
-// FIXED PATHS: The previous path was causing compilation errors.
-// These paths are adjusted to match standard project structure.
 import Navbar from '../../Components/Navbar/Navbar'; 
 import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
 
@@ -14,7 +12,6 @@ function AddDeco() {
     description: '',
     size: '',
     price: '',
-    // ADDED: Quantity field
     quantity: '', 
   });
 
@@ -25,9 +22,8 @@ function AddDeco() {
   // State for loading and messages
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
-  
-  // Define the API URL once
-  const API_URL = 'http://localhost:8080/api/v1/homedeco/saveHomedeco';
+
+  // --- DELETED THE FLOATING CODE BLOCK FROM HERE ---
 
   // Handler for text/number/select inputs
   const handleInputChange = (e) => {
@@ -43,9 +39,7 @@ function AddDeco() {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      // Create a URL for image preview
       const previewUrl = URL.createObjectURL(file);
-      // Clean up previous preview URL to avoid memory leaks
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
@@ -66,38 +60,32 @@ function AddDeco() {
     }
     
     try {
-      // 1. Prepare the JSON Data Object (Mapping frontend state to Backend DTO keys)
+      // 1. Prepare the JSON Data Object
       const decoData = {
         decoName: formData.name,
         decoDetails: formData.description,
         decoPrice: formData.price.toString(),
         decoSize: formData.size,
-        // UPDATED: Sending quantity as an Integer
         quantity: parseInt(formData.quantity) 
       };
 
       // 2. Create FormData
       const data = new FormData();
-      
-      // Part 1: The File (Key must be 'file')
       data.append('file', imageFile);
-      
-      // Part 2: The Data (Key must be 'data')
       data.append('data', JSON.stringify(decoData));
 
-      // 3. Send the request
-      const response = await axios.post(
-        API_URL, // Using the defined API_URL constant
+    
+      const response = await api.post(
+        '/homedeco/saveHomedeco', 
         data, 
         {
           headers: {
-            // This header is essential for sending files
             'Content-Type': 'multipart/form-data', 
           }
         }
       );
 
-      // 4. Handle success (Assuming VarList.RSP_SUCCESS is "00")
+      // 4. Handle success
       if (response.data.code === "00") {
         setMessage({ type: 'success', content: 'Deco item added successfully!' });
         
@@ -109,16 +97,14 @@ function AddDeco() {
         
         window.scrollTo(0, 0);
       } else {
-         // Handle logical errors (e.g., duplicate name)
-         setMessage({ type: 'error', content: response.data.message || 'Failed to add item. A duplicate item may exist.' });
+         setMessage({ type: 'error', content: response.data.message || 'Failed to add item.' });
       }
 
     } catch (error) {
-      // Handle network or server errors
       console.error('Error adding deco item:', error.response?.data || error.message);
       setMessage({
         type: 'error',
-        content: error.response?.data?.message || 'Failed to connect to server. Check logs/CORS settings.'
+        content: error.response?.data?.message || 'Failed to connect to server.'
       });
     } finally {
       setLoading(false);
@@ -132,10 +118,8 @@ function AddDeco() {
         <AdminNavbar />
         <main className="flex-1 p-6 md:p-10">
           
-          {/* Form Container */}
           <div className="max-w-4xl mx-auto">
             
-            {/* Header (matches your code) */}
             <h1 className="text-3xl font-bold text-gray-800">
               This is Add deco item page
             </h1>
@@ -143,7 +127,6 @@ function AddDeco() {
               Fill in the details below to add a new home deco product.
             </p>
 
-            {/* Success/Error Message Display */}
             {message.content && (
               <div 
                 className={`flex items-center gap-3 p-4 mb-6 rounded-lg shadow ${
@@ -155,16 +138,13 @@ function AddDeco() {
               </div>
             )}
 
-            {/* Start of the Form */}
             <form onSubmit={handleSubmit} className="space-y-8">
-                
-              {/* --- Main Details Card (Now contains all fields) --- */}
+              
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                   Deco Details
                 </h2>
                 
-                {/* Grid for text inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* Name */}
@@ -201,7 +181,7 @@ function AddDeco() {
                     />
                   </div>
 
-                  {/* ADDED: Quantity Input */}
+                  {/* Quantity Input */}
                   <div className="md:col-span-1">
                     <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
                       Quantity (Stock)
@@ -251,7 +231,7 @@ function AddDeco() {
                   </div>
                 </div>
 
-                {/* --- Image Upload --- */}
+                {/* Image Upload */}
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Item Image
@@ -283,7 +263,7 @@ function AddDeco() {
                   </label>
                 </div>
                 
-                {/* --- Submit Button --- */}
+                {/* Submit Button */}
                 <div className="flex justify-end pt-6">
                     <button
                     type="submit"
@@ -296,7 +276,6 @@ function AddDeco() {
                 </div>
 
               </div>
-              
             </form>
           </div>
         </main>
