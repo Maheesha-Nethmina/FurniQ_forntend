@@ -4,14 +4,11 @@ import Footer from "../../Components/Footer/Footer";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Mail } from "lucide-react";
 
-// 1. Import your new reusable Hero component
 import Hero from "../../Components/Hero/Hero";
 
-// 2. Import the images you need
-import aboutHeroImage from "../../assets/hero02.webp"; // The hero image you requested
-import aboutStoryImage from "../../assets/image03.jpg"; // The image for the "Our Story" section
+import aboutHeroImage from "../../assets/hero02.webp"; 
+import aboutStoryImage from "../../assets/image03.jpg"; 
 
-// Animation variants for staggered children
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -22,7 +19,6 @@ const containerVariants = {
   },
 };
 
-// Animation variants for individual items
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -58,7 +54,6 @@ function About() {
     <>
       <Navbar />
       <div className="bg-white font-sans">
-        {/* 3. Use the new Hero component */}
         <Hero
           image={aboutHeroImage}
           title={
@@ -69,7 +64,6 @@ function About() {
           subtitle="Crafting timeless furniture for the modern home. We believe in quality, design, and comfort that lasts a lifetime."
         />
 
-        {/* Section 2: Our Story & Image */}
         <section className="py-20 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             {/* Image */}
@@ -154,10 +148,8 @@ E               enduring, our journey began with a simple idea: to bring
           </div>
         </section>
 
-        {/* Section 4: Contact & Location */}
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            {/* Contact Details */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -169,7 +161,7 @@ E               enduring, our journey began with a simple idea: to bring
               </h2>
               <div className="space-y-6">
                 <a
-                  href="https://goo.gl/maps/bY9zEb2N3vR8Z2qF7" // Example Google Maps link for Nupe Junction
+                  href="https://goo.gl/maps/bY9zEb2N3vR8Z2qF7"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start text-lg text-gray-700 hover:text-amber-500 transition-colors"
@@ -194,7 +186,6 @@ E               enduring, our journey began with a simple idea: to bring
               </div>
             </motion.div>
 
-            {/* Google Map Embed */}
             <motion.div
               className="h-96"
               initial={{ opacity: 0, scale: 0.9 }}
