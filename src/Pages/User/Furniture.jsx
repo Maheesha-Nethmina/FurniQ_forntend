@@ -9,9 +9,6 @@ import Footer from "../../Components/Footer/Footer";
 import FurnitureHeroImage from "../../assets/fur6.jpeg";
 
 const FurnitureCard = ({ item }) => {
-
-  
- 
     
   const {
     id,
@@ -29,7 +26,6 @@ const FurnitureCard = ({ item }) => {
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock < 5;
 
-  // --- Button Handlers ---
   const handleAddToCart = (e) => {
     e.stopPropagation();
     if (isOutOfStock) return;
@@ -43,12 +39,10 @@ const FurnitureCard = ({ item }) => {
     if (isOutOfStock) return;
     navigate(`/furnitureDetail/${id}`);
   };
-  // -----------------------
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative">
       
-      {/* Type Badge (Top Left) */}
       {furnitureType && (
         <div className="absolute top-3 left-3 z-10">
           <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-full uppercase tracking-widest shadow-sm">
@@ -57,7 +51,6 @@ const FurnitureCard = ({ item }) => {
         </div>
       )}
 
-      {/* Image Section */}
       <div className="relative h-64 overflow-hidden bg-gray-50">
         <img 
           src={furniturePicture || "https://via.placeholder.com/400x300?text=No+Image"} 
@@ -65,7 +58,6 @@ const FurnitureCard = ({ item }) => {
           className={`w-full h-full object-cover object-center transition-transform duration-700 ${isOutOfStock ? 'grayscale opacity-70' : 'group-hover:scale-105'}`}
         />
         
-        {/* Out of Stock Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
              <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm tracking-wider shadow-lg transform -rotate-6 border-2 border-white">
@@ -74,7 +66,6 @@ const FurnitureCard = ({ item }) => {
           </div>
         )}
 
-        {/* Add to Cart Icon (Top Right) - Only show if in stock */}
         {!isOutOfStock && (
           <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button 
@@ -87,7 +78,6 @@ const FurnitureCard = ({ item }) => {
           </div>
         )}
         
-        {/* Buy Now Button (Slides up) - Only show if in stock */}
         {!isOutOfStock && (
           <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
             <button 
