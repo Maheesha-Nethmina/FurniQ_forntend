@@ -48,7 +48,6 @@ function FurnitureDetail() {
     </div>
   );
 
-  // Calculate stock status
   const stock = item.furnitureQuantity || item.quantity || 0;
   const isOutOfStock = stock === 0;
 
@@ -86,7 +85,6 @@ function FurnitureDetail() {
 
             <div className="p-6 lg:p-10 flex flex-col">
               
-              {/* Category Tag */}
               {item.furnitureType && (
                 <span className="inline-block w-max px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-wider rounded-full mb-3">
                   {item.furnitureType}
@@ -103,7 +101,6 @@ function FurnitureDetail() {
                   {item.furniturePrice}
                 </div>
                 
-                {/* Stock Status */}
                 <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${
                     isOutOfStock ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                 }`}>
@@ -112,11 +109,8 @@ function FurnitureDetail() {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="h-px bg-gray-100 w-full my-1"></div>
 
-              {/* Description */}
-              {/* CHANGED: Reduced padding-y */}
               <div className="py-4">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Description</h3>
                 <p className="text-gray-600 leading-relaxed text-base">
@@ -124,8 +118,6 @@ function FurnitureDetail() {
                 </p>
               </div>
 
-              {/* Specifications */}
-              {/* CHANGED: Made grid more compact */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {item.furnitureSize && (
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -145,9 +137,7 @@ function FurnitureDetail() {
                   </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="mt-auto flex flex-col sm:flex-row gap-3">
-                {/* CHANGED: Reduced button height (py-4 -> py-3) */}
                 <button 
                   disabled={isOutOfStock}
                   className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
