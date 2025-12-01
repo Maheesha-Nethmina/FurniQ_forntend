@@ -12,6 +12,7 @@ import Profile from './Pages/User/Profile'
 import Cart from './Pages/User/Cart'
 import FurnitureDetail from './Pages/User/FurnitureDetail'
 import Homedecodetails  from './Pages/User/HomedecoDetail'
+import PaymentPage from './Pages/User/PaymentPage';
 
 import AdminDashboard from './Pages/Admin/AdminDashBoard'
 import Oder_Furniture from './Pages/Admin/Oder_Furniture'
@@ -36,6 +37,7 @@ function App() {
             <Route path='/cart' element={<Cart />} />
             <Route path='/furnitureDetail/:id' element={<FurnitureDetail/>}/>
             <Route path='/homedecoDetail/:id' element={<Homedecodetails/>}/>
+            <Route path='/payment/:id' element={<PaymentPage />} />
             
             <Route path='/admin' element={<AdminDashboard />} />
             <Route path='/order-furniture' element={<Oder_Furniture />} />

@@ -149,7 +149,12 @@ function FurnitureDetail() {
                 <button 
                   disabled={isOutOfStock}
                   className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
-                  onClick={() => console.log("Payment logic here")}
+                      onClick={() => navigate(`/payment/${item.id}`, { 
+                          state: { 
+                              item: item, 
+                              type: "FURBITURE"
+                          } 
+  })}
                 >
                   <CreditCard size={20} /> Make Payment
                 </button>
