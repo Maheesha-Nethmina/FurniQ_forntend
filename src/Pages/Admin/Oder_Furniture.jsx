@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import { 
   Armchair, 
   Pencil, 
@@ -11,14 +12,14 @@ import {
   Ruler,
   Tag
 } from 'lucide-react';
-import api from '../../api/axiosConfig'; // Adjusted to ../
+import api from '../../api/axiosConfig'; 
 
-// Adjusted paths to ../ and aligned AdminNavbar path with your structure
 import Navbar from '../../Components/Navbar/Navbar';
 import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
 import Footer from '../../Components/Footer/Footer';
 
 function Oder_Furniture() {
+  const navigate = useNavigate(); // 2. Initialize hook
   const [furnitureList, setFurnitureList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,12 +35,11 @@ function Oder_Furniture() {
       const response = await api.get('/furniture/getAllfurnitures');
       
       if (response.data.code === "00") {
-        // Fix: Normalize data AND Sort by ID to prevent jumping
         const normalizedData = response.data.content.map(item => ({
             ...item,
             furnitureQuantity: item.furnitureQuantity ?? item.quantity ?? 0
         }))
-        .sort((a, b) => a.id - b.id); // Sorted by ID
+        .sort((a, b) => a.id - b.id); 
 
         setFurnitureList(normalizedData);
       } else {
@@ -57,14 +57,13 @@ function Oder_Furniture() {
     fetchFurniture();
   }, []);
 
-  // --- 2. HANDLE QUANTITY CHANGE (Quick Update) ---
+  // --- 2. HANDLE QUANTITY CHANGE ---
   const handleQuantityChange = async (item, change) => {
     const currentQty = item.furnitureQuantity ?? item.quantity ?? 0;
     const newQuantity = currentQty + change;
     
     if (newQuantity < 0) return; 
 
-    // --- CONFIRMATION DIALOG ---
     const action = change > 0 ? "increase" : "decrease";
     const confirmMsg = `Are you sure you want to ${action} the stock for "${item.furnitureName}" to ${newQuantity}?`;
     
@@ -72,7 +71,6 @@ function Oder_Furniture() {
         return; 
     }
 
-    // Update LOCAL state immediately (Optimistic Update)
     const updatedItemState = { ...item, furnitureQuantity: newQuantity };
     setFurnitureList(prev => 
       prev.map(i => i.id === item.id ? updatedItemState : i)
@@ -243,13 +241,27 @@ function Oder_Furniture() {
         </div>
 
         <main className="flex-1 p-6 lg:p-10 overflow-x-hidden">
-          <div className="mb-8 flex justify-between items-end">
+          {/* --- 3. UPDATED HEADER SECTION --- */}
+          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Furniture Inventory</h1>
               <p className="text-gray-500 mt-2">Manage stock, prices, and furniture details.</p>
             </div>
-            <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-sm font-medium text-gray-600">
-                Total Items: {furnitureList.length}
+            
+            <div className="flex items-center gap-3">
+                {/* Total Count Badge */}
+                <div className="bg-white px-4 py-2.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium text-gray-600">
+                    Total: {furnitureList.length}
+                </div>
+
+                {/* Add New Button */}
+                <button 
+                    onClick={() => navigate('/add-item')}
+                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all active:scale-95"
+                >
+                    <Plus size={20} />
+                    <span>Add New Furniture</span>
+                </button>
             </div>
           </div>
 
@@ -389,19 +401,19 @@ function Oder_Furniture() {
 
               {/* Buttons */}
               <div className="pt-4 flex gap-3">
-                 <button 
-                   type="button" 
-                   onClick={() => setIsModalOpen(false)}
-                   className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition"
-                 >
-                   Cancel
-                 </button>
-                 <button 
-                   type="submit"
-                   className="flex-1 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition flex items-center justify-center gap-2 shadow-lg shadow-teal-200"
-                 >
-                   <Save size={18} /> Save Changes
-                 </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition flex items-center justify-center gap-2 shadow-lg shadow-teal-200"
+                  >
+                    <Save size={18} /> Save Changes
+                  </button>
               </div>
 
             </form>

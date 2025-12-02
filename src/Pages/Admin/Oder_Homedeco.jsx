@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import { 
   Lamp, 
   Pencil, 
@@ -19,6 +20,7 @@ import AdminNavbar from '../../Components/Navbar/AdminNavbar';
 import Footer from '../../Components/Footer/Footer';
 
 function Oder_Homedeco() {
+  const navigate = useNavigate(); // 2. Initialize hook
   const [decoList, setDecoList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -233,13 +235,27 @@ function Oder_Homedeco() {
         </div>
 
         <main className="flex-1 p-6 lg:p-10 overflow-x-hidden">
-          <div className="mb-8 flex justify-between items-end">
+          {/* --- 3. UPDATED HEADER SECTION --- */}
+          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Home Deco Inventory</h1>
               <p className="text-gray-500 mt-2">Manage decor items, prices, and stock.</p>
             </div>
-            <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-sm font-medium text-gray-600">
-                Total Items: {decoList.length}
+
+            <div className="flex items-center gap-3">
+                {/* Total Count Badge */}
+                <div className="bg-white px-4 py-2.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium text-gray-600">
+                    Total: {decoList.length}
+                </div>
+
+                {/* Add New Button */}
+                <button 
+                    onClick={() => navigate('/add-deco')}
+                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all active:scale-95"
+                >
+                    <Plus size={20} />
+                    <span>Add New Home Deco</span>
+                </button>
             </div>
           </div>
 
@@ -343,14 +359,14 @@ function Oder_Homedeco() {
 
               {/* Size Row */}
               <div>
-                 <label className="block text-sm font-semibold text-gray-700 mb-1">Size / Dimensions</label>
-                 <input 
-                   type="text" 
-                   name="decoSize" 
-                   value={editingItem.decoSize} 
-                   onChange={handleModalChange}
-                   className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                 />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Size / Dimensions</label>
+                  <input 
+                    type="text" 
+                    name="decoSize" 
+                    value={editingItem.decoSize} 
+                    onChange={handleModalChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  />
               </div>
 
               {/* Details */}
@@ -367,19 +383,19 @@ function Oder_Homedeco() {
 
               {/* Buttons */}
               <div className="pt-4 flex gap-3">
-                 <button 
-                   type="button" 
-                   onClick={() => setIsModalOpen(false)}
-                   className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition"
-                 >
-                   Cancel
-                 </button>
-                 <button 
-                   type="submit"
-                   className="flex-1 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition flex items-center justify-center gap-2 shadow-lg shadow-teal-200"
-                 >
-                   <Save size={18} /> Save Changes
-                 </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition flex items-center justify-center gap-2 shadow-lg shadow-teal-200"
+                  >
+                    <Save size={18} /> Save Changes
+                  </button>
               </div>
 
             </form>

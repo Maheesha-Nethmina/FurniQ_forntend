@@ -4,17 +4,13 @@ import {
   User, 
   Phone, 
   Mail, 
-  MoreVertical, 
   ArrowLeftRight,
   Ban,
-  CheckCircle,
-  Loader2,
-  Search
+  Loader2
 } from 'lucide-react';
 
 import api from '../../api/axiosConfig';
 
-// Import Layout Components
 import Navbar from '../../Components/Navbar/Navbar'; 
 import AdminNavbar from '../../Components/Navbar/Adminnavbar';
 import Footer from '../../Components/Footer/Footer';
@@ -24,14 +20,13 @@ function UserDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 1. FETCH DATA ---
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const response = await api.get('/auth/getAllUsers');
       
       if (response.data.code === "00") {
-        // Sort by ID (Ascending)
+        // Sort by ID (Ascending) - Data is still sorted, just not shown
         const sortedUsers = response.data.content.sort((a, b) => a.id - b.id);
         setUsers(sortedUsers);
       } else {
@@ -49,7 +44,6 @@ function UserDetails() {
     fetchUsers();
   }, []);
 
-  // --- 2. ACTION HANDLERS ---
   
   // Handle Role Update (User <-> Admin)
   const handleRoleUpdate = async (user) => {
@@ -70,7 +64,7 @@ function UserDetails() {
 
         if (response.data.code === "00") {
           alert(`Success! ${user.username} is now a ${newRole}.`);
-          fetchUsers(); // Refresh list
+          fetchUsers(); 
         } else {
           alert("Failed to update role.");
         }
@@ -81,27 +75,19 @@ function UserDetails() {
     }
   };
 
-  // Handle Deactivation 
-  // NOTE: Assuming your Backend User Entity has an 'active' boolean field.
-  // If not, this will need backend support.
   const handleToggleActive = async (user) => {
     alert("This feature requires an 'isActive' column in your database Users table.");
-    // Logic would look like this:
-    // await api.put('/auth/toggleUserStatus', { id: user.id, status: !user.isActive });
-    // fetchUsers();
   };
 
-
-  // --- 3. FILTER LISTS ---
+  
   const adminList = users.filter(u => u.role === 'ADMIN');
   const userList = users.filter(u => u.role === 'USER');
 
-  // --- HELPER COMPONENT FOR TABLE ROW ---
+  // --- UPDATED ROW COMPONENT (Removed ID Column) ---
   const UserRow = ({ user }) => (
     <tr className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-        #{user.id}
-      </td>
+      {/* 1. Removed the ID <td> here */}
+      
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-full ${user.role === 'ADMIN' ? 'bg-teal-50 text-teal-600' : 'bg-blue-50 text-blue-600'}`}>
@@ -157,11 +143,11 @@ function UserDetails() {
       {/* 1. Top Navbar */}
       <Navbar />
 
-      <div className="flex flex-1 pt-16"> {/* Add padding top for sticky navbar */}
+      <div className="flex flex-1 pt-16">
         
         {/* 2. Admin Sidebar */}
         <div className="hidden md:block">
-           <AdminNavbar />
+            <AdminNavbar />
         </div>
 
         {/* 3. Main Content Area */}
@@ -201,7 +187,7 @@ function UserDetails() {
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50/50">
                       <tr>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User ID</th>
+                        {/* 2. Removed ID Header */}
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Profile</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Info</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
@@ -212,7 +198,7 @@ function UserDetails() {
                         adminList.map(admin => <UserRow key={admin.id} user={admin} />)
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-400 italic">No admins found.</td>
+                          <td colSpan="3" className="px-6 py-8 text-center text-gray-400 italic">No admins found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -238,7 +224,7 @@ function UserDetails() {
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50/50">
                       <tr>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User ID</th>
+                        {/* 3. Removed ID Header */}
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Profile</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Info</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
@@ -249,7 +235,7 @@ function UserDetails() {
                         userList.map(user => <UserRow key={user.id} user={user} />)
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-400 italic">No users found.</td>
+                          <td colSpan="3" className="px-6 py-8 text-center text-gray-400 italic">No users found.</td>
                         </tr>
                       )}
                     </tbody>

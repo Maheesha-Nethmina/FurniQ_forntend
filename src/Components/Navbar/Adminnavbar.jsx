@@ -6,23 +6,23 @@ import {
   Lamp,
   PackagePlus,
   Wand2,
-  Users, // 1. Added suitable icon for User Details
-  ChevronLeft, // Icons for the toggle button
+  Users,
+  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 
 const navLinks = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+  { name: 'User Details', icon: Users, path: '/userdetails' },
   { name: 'Furniture Orders', icon: Armchair, path: '/order-furniture' },
   { name: 'Home Deco Orders', icon: Lamp, path: '/order-homedeco' },
-  { name: 'Add New Furniture', icon: PackagePlus, path: '/add-item' },
-  { name: 'Add New Deco', icon: Wand2, path: '/add-deco' },
-  { name: 'User Details', icon: Users, path: '/userdetails' } // 2. Updated with Users icon
+  // { name: 'Add New Furniture', icon: PackagePlus, path: '/add-item' },
+  // { name: 'Add New Deco', icon: Wand2, path: '/add-deco' },
 ];
 
 function AdminNavbar() {
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = useState(true); // 3. State to control sidebar width
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <div 

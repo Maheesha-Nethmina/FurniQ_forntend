@@ -4,27 +4,26 @@ import {
   ArrowLeft, Truck, MapPin, 
   CreditCard, User, Phone, Mail, Loader2
 } from 'lucide-react';
+// Corrected imports to prevent build errors
 import api from '../../api/axiosConfig'; 
 import Navbar from '../../Components/Navbar/Navbar';
 import Footer from '../../Components/Footer/Footer';
 
 const PaymentPage = () => {
-  // --- FIX 1: Rename 'id' to 'productId' to avoid confusion ---
-  // This 'id' comes from the URL (e.g., /payment/101) -> That is the PRODUCT ID
   const { id: productId } = useParams(); 
-  
   const location = useLocation();
   const navigate = useNavigate();
   
-  // --- FIX 2: Get the ACTUAL User ID from Local Storage for logging ---
+  // 1. Get User ID from Local Storage
   const storageUserId = localStorage.getItem('userId');
 
-  console.log("🔍 DEBUG: Product ID (from URL):", productId);
-  console.log("🔍 DEBUG: User ID (from LocalStorage):", storageUserId);
+  console.log("DEBUG: Payment Page Loaded. Storage UserID:", storageUserId);
 
   const rawItem = location.state?.item;
   const itemType = location.state?.type || "FURNITURE"; 
+  const selectedQty = location.state?.quantity || 1; 
 
+  // Normalizing Data
   const getNormalizedItem = () => {
     if (!rawItem) return null;
     if (itemType === "HOMEDECO") {
@@ -49,7 +48,7 @@ const PaymentPage = () => {
   const item = getNormalizedItem();
 
   const [formData, setFormData] = useState({
-    userId: storageUserId || "", // Use the variable we got from storage
+    userId: storageUserId || "", 
     username: "", 
     email: "",
     mobileNumber: "",
@@ -57,47 +56,46 @@ const PaymentPage = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [dataFetching, setDataFetching] = useState(true);
-
-  // --- FETCH USER DETAILS ---
+  
+  // 2. Fetch User Data on Mount
   useEffect(() => {
     const fetchUserDetails = async () => {
-      const currentUserId = localStorage.getItem('userId');
-      console.log("Fetching details for User ID:", currentUserId);
+      // Debugging: Check if ID exists
+      if (!storageUserId) {
+        console.warn("DEBUG: No User ID found in LocalStorage. Please Log Out and Log In again.");
+        return;
+      }
 
-      if (currentUserId) {
-        try {
-          setDataFetching(true);
-      
-          const response = await api.get(`/auth/getUser/${currentUserId}`);
+      try {
+        // console.log(`DEBUG: Fetching user details for ID: ${storageUserId}...`);
+        const response = await api.get(`/auth/getUser/${storageUserId}`);
+        
+        // console.log("DEBUG: API Response:", response.data);
+
+        if (response.data.code === "00") { 
+          const user = response.data.content;
+          // console.log("DEBUG: User Details Found:", user);
           
-          if (response.data.code === "00") { 
-            const user = response.data.content;
-            
-            setFormData(prev => ({
-              ...prev,
-              userId: currentUserId,
-              username: user.username || user.name || "", 
-              email: user.email || "",
-              mobileNumber: user.mobileNumber || "", 
-              address: "" 
-            }));
-          } 
-        } catch (error) {
-          console.error("Error fetching user details:", error);
-        } finally {
-          setDataFetching(false);
+          // 3. Populate State with DB Data
+          setFormData(prev => ({
+            ...prev,
+            username: user.username || "", 
+            email: user.email || "",
+            mobileNumber: user.mobileNumber || "", 
+            address: "" // Address kept empty for user to fill
+          }));
+        } else {
+            console.error("DEBUG: Failed to fetch user. Code:", response.data.code);
         }
-      } else {
-        console.warn("No User ID found in Local Storage");
-        setDataFetching(false);
+      } catch (error) {
+        console.error("DEBUG: Error fetching user details:", error);
       }
     };
 
     fetchUserDetails();
-  }, []); 
+  }, [storageUserId]); 
 
-  // Redirect if no item data found
+  // Redirect if no item
   useEffect(() => {
     if (!item) {
       alert("No item selected. Returning to collection.");
@@ -107,20 +105,22 @@ const PaymentPage = () => {
 
   if (!item) return null;
 
-  // --- PRICE & SHIPPING LOGIC ---
-  const price = Number(item.price);
+  // --- Calculations ---
+  const unitPrice = Number(item.price);
+  const subTotal = unitPrice * selectedQty;
   let shippingCost = 0;
   
-  if (price < 5000) shippingCost = 500;
-  else if (price >= 5000 && price < 10000) shippingCost = 700;
-  else if (price >= 10000 && price < 25000) shippingCost = 2000;
-  else if (price >= 25000 && price < 50000) shippingCost = 2500;
+  if (subTotal < 5000) shippingCost = 500;
+  else if (subTotal >= 5000 && subTotal < 10000) shippingCost = 700;
+  else if (subTotal >= 10000 && subTotal < 25000) shippingCost = 2000;
+  else if (subTotal >= 25000 && subTotal < 50000) shippingCost = 2500;
   else shippingCost = 3500;
 
-  const totalAmount = price + shippingCost;
+  const totalAmount = subTotal + shippingCost;
 
-  // --- HANDLERS ---
+  // --- Handlers ---
   const handleChange = (e) => {
+    // Prevent editing of username and email
     if (e.target.name === 'username' || e.target.name === 'email') return;
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -128,6 +128,8 @@ const PaymentPage = () => {
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     
+    // console.log("DEBUG: Placing Order with Data:", formData);
+
     if (!formData.address || !formData.mobileNumber) {
       alert("Please fill in your address and mobile number.");
       return;
@@ -136,10 +138,10 @@ const PaymentPage = () => {
     setLoading(true);
 
     const orderDTO = {
-      userId: parseInt(formData.userId),
+      userId: parseInt(storageUserId), 
       productId: parseInt(item.id),
       productName: item.name,
-      quantity: 1, 
+      quantity: selectedQty, 
       price: parseFloat(totalAmount), 
       username: formData.username,
       email: formData.email,
@@ -150,16 +152,17 @@ const PaymentPage = () => {
 
     try {
       const response = await api.post('/order/saveNewOrder', orderDTO);
+      // console.log("DEBUG: Order Response:", response.data);
       
       if (response.data.code === "00") {
-        alert("Order Placed Successfully! Check your email for confirmation.");
+        alert("Order Placed Successfully!");
         navigate(itemType === "HOMEDECO" ? '/homedeco' : '/furniture');
       } else {
-        alert("Order Failed: " + (response.data.message || "Unknown error"));
+        alert("Order Failed: " + response.data.message);
       }
     } catch (error) {
-      console.error("Payment Error:", error);
-      alert("Failed to place order. Please try again.");
+      console.error("DEBUG: Payment Error:", error);
+      alert("Failed to place order.");
     } finally {
       setLoading(false);
     }
@@ -190,7 +193,7 @@ const PaymentPage = () => {
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
-                  {/* READ ONLY: Name */}
+                  {/* Name (READ ONLY) */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
                     <div className="relative">
@@ -198,14 +201,14 @@ const PaymentPage = () => {
                       <input 
                         type="text" 
                         name="username"
-                        value={dataFetching ? "Loading..." : formData.username} 
-                        readOnly
-                        className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
+                        value={formData.username} 
+                        readOnly // <--- BLOCKED
+                        className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
                       />
                     </div>
                   </div>
                   
-                  {/* READ ONLY: Email */}
+                  {/* Email (READ ONLY) */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                     <div className="relative">
@@ -213,15 +216,15 @@ const PaymentPage = () => {
                       <input 
                         type="email" 
                         name="email"
-                        value={dataFetching ? "Loading..." : formData.email} 
-                        readOnly
-                        className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
+                        value={formData.email} 
+                        readOnly // <--- BLOCKED
+                        className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* EDITABLE: Mobile */}
+                {/* Mobile (EDITABLE) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
                   <div className="relative">
@@ -231,14 +234,14 @@ const PaymentPage = () => {
                       name="mobileNumber"
                       placeholder="Enter your mobile number"
                       value={formData.mobileNumber} 
-                      onChange={handleChange}
+                      onChange={handleChange} 
                       required
                       className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition"
                     />
                   </div>
                 </div>
 
-                {/* EDITABLE: Address */}
+                {/* Address (EDITABLE) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Shipping Address</label>
                   <textarea 
@@ -246,7 +249,7 @@ const PaymentPage = () => {
                     rows="4"
                     placeholder="Enter your full delivery address..."
                     value={formData.address} 
-                    onChange={handleChange}
+                    onChange={handleChange} 
                     required
                     className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition resize-none"
                   ></textarea>
@@ -271,16 +274,25 @@ const PaymentPage = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded-full">
-                        {item.displayCategory}
-                    </span>
+                    <div className="flex gap-2 mt-1">
+                        <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded-full">
+                            {item.displayCategory}
+                        </span>
+                        <span className="inline-block px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-bold uppercase rounded-full">
+                            Qty: {selectedQty}
+                        </span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-3 py-4 border-t border-dashed border-gray-200">
                   <div className="flex justify-between text-sm text-gray-600">
-                    <span>Subtotal</span>
-                    <span className="font-medium">LKR {price.toLocaleString()}</span>
+                    <span>Unit Price</span>
+                    <span className="font-medium">LKR {unitPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal ({selectedQty} items)</span>
+                    <span className="font-medium">LKR {subTotal.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm text-gray-600">

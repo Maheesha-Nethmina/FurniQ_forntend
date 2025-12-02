@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ShoppingCart, CreditCard, Package,
-  Ruler, CheckCircle, AlertCircle, Loader2
+  Ruler, CheckCircle, AlertCircle, Loader2,
+  Plus, Minus 
 } from 'lucide-react';
-import api from '../../api/axiosConfig';
-import Navbar from '../../Components/Navbar/Navbar';
-import Footer from '../../Components/Footer/Footer';
+import api from '../../api/axiosConfig'; // Adjusted to ../
+import Navbar from '../../Components/Navbar/Navbar'; // Adjusted to ../
+import Footer from '../../Components/Footer/Footer'; // Adjusted to ../
 
 function HomedecoDetail() {
   const { id } = useParams();
@@ -16,12 +17,14 @@ function HomedecoDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 1. Quantity State
+  const [selectedQty, setSelectedQty] = useState(1);
+
   // Fetch single deco item
   useEffect(() => {
     const getDecoDetails = async () => {
       try {
         setLoading(true);
-        // Endpoint: /getHomedecoById?id=...
         const response = await api.get(`/homedeco/getHomedecoById?id=${id}`);
         setItem(response.data.content);
       } catch (err) {
@@ -49,9 +52,25 @@ function HomedecoDetail() {
     </div>
   );
 
-  // Calculate stock (Using 'quantity' as per DTO structure assumption)
   const stock = item.quantity || 0;
   const isOutOfStock = stock === 0;
+
+  // 2. Price Calculation
+  const unitPrice = Number(item.decoPrice) || 0;
+  const totalPrice = unitPrice * selectedQty;
+
+  // 3. Handlers
+  const handleIncrease = () => {
+    if (selectedQty < stock) {
+      setSelectedQty(prev => prev + 1);
+    }
+  };
+
+  const handleDecrease = () => {
+    if (selectedQty > 1) {
+      setSelectedQty(prev => prev - 1);
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
@@ -122,44 +141,91 @@ function HomedecoDetail() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {item.decoSize && (
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                     <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
                         <Ruler size={16} /> <span className="text-xs font-bold uppercase">Dimensions</span>
-                     </div>
-                     <p className="font-semibold text-gray-800 text-sm">{item.decoSize}</p>
+                      </div>
+                      <p className="font-semibold text-gray-800 text-sm">{item.decoSize}</p>
                   </div>
                 )}
                 <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                     <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
                         <Package size={16} /> <span className="text-xs font-bold uppercase">Availability</span>
-                     </div>
-                     <p className="font-semibold text-gray-800 text-sm">
+                      </div>
+                      <p className="font-semibold text-gray-800 text-sm">
                         {isOutOfStock ? "Unavailable" : `${stock} units left`}
-                     </p>
+                      </p>
                   </div>
               </div>
 
-              <div className="mt-auto flex flex-col sm:flex-row gap-3">
-                <button 
-                  disabled={isOutOfStock}
-                  className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
-                  onClick={() => console.log("Add to cart logic here")}
-                >
-                  <ShoppingCart size={20} /> Add to Cart
-                </button>
+              <div className="mt-auto space-y-4">
+                
+                {/* 4. Quantity Selector & Total Price */}
+                {!isOutOfStock && (
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
+                    
+                    {/* Quantity Controls */}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</span>
+                        <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                          <button 
+                            onClick={handleDecrease}
+                            disabled={selectedQty <= 1}
+                            className="p-2 px-3 text-gray-600 hover:bg-gray-100 rounded-l-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <div className="w-10 text-center font-bold text-gray-900">
+                            {selectedQty}
+                          </div>
+                          <button 
+                            onClick={handleIncrease}
+                            disabled={selectedQty >= stock}
+                            className="p-2 px-3 text-gray-600 hover:bg-gray-100 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                        {selectedQty === stock && (
+                          <span className="text-[10px] text-amber-600 font-medium">Max reached</span>
+                        )}
+                    </div>
 
-                <button 
-                  disabled={isOutOfStock}
-                  className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
-                  // onClick={() => console.log("Payment logic here")}
-                  onClick={() => navigate(`/payment/${item.id}`, {
+                    {/* Total Price Display */}
+                    <div className="text-right">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Value</span>
+                        <div className="text-2xl font-extrabold text-teal-700">
+                            <span className="text-sm font-semibold text-gray-400 mr-1">LKR</span>
+                            {totalPrice.toLocaleString()}
+                        </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button 
+                    disabled={isOutOfStock}
+                    className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
+                    onClick={() => console.log(`Added ${selectedQty} items to cart`)}
+                  >
+                    <ShoppingCart size={20} /> Add to Cart
+                  </button>
+
+                  <button 
+                    disabled={isOutOfStock}
+                    className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
+                    onClick={() => navigate(`/payment/${item.id}`, {
                       state: {
                           item: item,
-                          type: "HOMEDECO"
+                          type: "HOMEDECO",
+                          quantity: selectedQty, // 5. Passing Data
+                          totalValue: totalPrice
                       }
-                  })}
-                >
-                  <CreditCard size={20} /> Make Payment
-                </button>
+                    })}
+                  >
+                    <CreditCard size={20} /> Buy Now
+                  </button>
+                </div>
               </div>
 
             </div>
