@@ -16,7 +16,7 @@ const navLinks = [
   { name: 'User Details', icon: Users, path: '/userdetails' },
   { name: 'Furniture Inventory', icon: Armchair, path: '/order-furniture' },
   { name: 'Home Deco Inventory', icon: Lamp, path: '/order-homedeco' },
-  // { name: 'Add New Furniture', icon: PackagePlus, path: '/add-item' },
+  { name: 'Oders', icon: PackagePlus, path: '/oder_details' },
   // { name: 'Add New Deco', icon: Wand2, path: '/add-deco' },
 ];
 
@@ -27,7 +27,7 @@ function AdminNavbar() {
   return (
     <div 
       className={`
-        sticky top-16 flex flex-col bg-gray-900 shadow-xl h-[calc(100vh-4rem)] 
+        sticky top-16 flex flex-col bg-gray-900 shadow-xl h-[calc(100vh-1rem)] 
         transition-all duration-300 ease-in-out border-r border-gray-800
         ${isExpanded ? 'w-64' : 'w-20'} 
       `}

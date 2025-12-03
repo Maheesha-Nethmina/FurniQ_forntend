@@ -12,14 +12,17 @@ import Profile from './Pages/User/Profile'
 import Cart from './Pages/User/Cart'
 import FurnitureDetail from './Pages/User/FurnitureDetail'
 import Homedecodetails  from './Pages/User/HomedecoDetail'
-import PaymentPage from './Pages/User/PaymentPage';
+import PaymentPage from './Pages/User/PaymentPage'
+import CartCheckout from './Pages/User/CartCheckout'
 
 import AdminDashboard from './Pages/Admin/AdminDashBoard'
-import Oder_Furniture from './Pages/Admin/Oder_Furniture'
-import Oder_Homedeco from './Pages/Admin/Oder_Homedeco'
+import Furniture_Inventory from './Pages/Admin/Furniture Inventory'
+import HomeDeco_Inventory from './Pages/Admin/HomeDeco Inventory'
 import AddItem from './Pages/Admin/AddItem'
 import AddDeco from './Pages/Admin/AddDeco'
 import UserDetails from './Pages/Admin/UserDetails'
+import OderDetails from './Pages/Admin/OderDetails'
+import ShippedOrders from './Pages/Admin/ShippedOrders';
 
 function App() {
   return (
@@ -39,13 +42,16 @@ function App() {
             <Route path='/furnitureDetail/:id' element={<FurnitureDetail/>}/>
             <Route path='/homedecoDetail/:id' element={<Homedecodetails/>}/>
             <Route path='/payment/:id' element={<PaymentPage />} />
-            
+            <Route path="/cart-checkout" element={<CartCheckout />} />
+
             <Route path='/admin' element={<AdminDashboard />} />
-            <Route path='/order-furniture' element={<Oder_Furniture />} />
-            <Route path='/order-homedeco' element={<Oder_Homedeco />} />
+            <Route path='/order-furniture' element={<Furniture_Inventory />} />
+            <Route path='/order-homedeco' element={<HomeDeco_Inventory />} />
             <Route path='/add-item' element={<AddItem />} />
             <Route path='/add-deco' element={<AddDeco />} />
             <Route path='/userdetails' element={<UserDetails/>} />
+            <Route path= '/oder_details' element={<OderDetails/>}/>
+            <Route path="/shipped-orders" element={<ShippedOrders />} />
 
           </Routes>
         </BrowserRouter>

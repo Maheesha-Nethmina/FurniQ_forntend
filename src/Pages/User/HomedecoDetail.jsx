@@ -20,6 +20,8 @@ function HomedecoDetail() {
 
   // 1. Quantity State
   const [selectedQty, setSelectedQty] = useState(1);
+  // 2. Add to Cart Loading State
+  const [addingToCart, setAddingToCart] = useState(false);
 
   // Fetch single deco item
   useEffect(() => {
@@ -56,11 +58,11 @@ function HomedecoDetail() {
   const stock = item.quantity || 0;
   const isOutOfStock = stock === 0;
 
-  // 2. Price Calculation
+  // Price Calculation
   const unitPrice = Number(item.decoPrice) || 0;
   const totalPrice = unitPrice * selectedQty;
 
-  // 3. Handlers
+  // Handlers
   const handleIncrease = () => {
     if (selectedQty < stock) {
       setSelectedQty(prev => prev + 1);
@@ -73,19 +75,41 @@ function HomedecoDetail() {
     }
   };
 
-  // --- NEW: Auth Check Handlers ---
+  // --- UPDATED: Auth Check & Database Cart Logic ---
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const userId = localStorage.getItem('userId');
     
     if (!userId) {
       alert("Please Log in to system");
+      navigate('/login'); // Optional redirect
       return;
     }
 
-    // Logic for adding to cart
-    console.log(`Added ${selectedQty} items to cart for user ${userId}`);
-    alert("Item added to cart!");
+    setAddingToCart(true);
+
+    // Create DTO matching the backend expectation
+    const cartItem = {
+        userId: parseInt(userId),
+        productId: item.id,
+        productType: "HOMEDECO", // IMPORTANT: Must be "HOMEDECO" for this page
+        quantity: selectedQty
+    };
+
+    try {
+        const response = await api.post('/cart/add', cartItem);
+        
+        if(response.data.code === "00"){
+            alert("Item added to cart successfully!");
+        } else {
+            alert("Failed to add to cart: " + response.data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to server. Please try again.");
+    } finally {
+        setAddingToCart(false);
+    }
   };
 
   const handleBuyNow = () => {
@@ -194,7 +218,7 @@ function HomedecoDetail() {
 
               <div className="mt-auto space-y-4">
                 
-                {/* 4. Quantity Selector & Total Price */}
+                {/* Quantity Selector & Total Price */}
                 {!isOutOfStock && (
                   <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
                     
@@ -239,11 +263,15 @@ function HomedecoDetail() {
                 {/* Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button 
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || addingToCart}
                     className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
                     onClick={handleAddToCart}
                   >
-                    <ShoppingCart size={20} /> Add to Cart
+                    {addingToCart ? (
+                        <> <Loader2 size={20} className="animate-spin" /> Adding... </>
+                    ) : (
+                        <> <ShoppingCart size={20} /> Add to Cart </>
+                    )}
                   </button>
 
                   <button 
