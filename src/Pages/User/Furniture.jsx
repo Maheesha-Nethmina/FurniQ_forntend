@@ -9,7 +9,8 @@ import Footer from "../../Components/Footer/Footer";
 import FurnitureHeroImage from "../../assets/fur6.jpeg";
 
 const FurnitureCard = ({ item }) => {
-    
+  const navigate = useNavigate();
+
   const {
     id,
     furnitureName,
@@ -26,13 +27,42 @@ const FurnitureCard = ({ item }) => {
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock < 5;
 
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
+  // --- UPDATED: Add to Cart Logic ---
+  const handleAddToCart = async (e) => {
+    e.stopPropagation(); // Stop clicking the card from navigating to details
+    
     if (isOutOfStock) return;
-    console.log(`Added ${furnitureName} to cart!`);
-  };
 
-  const navigate = useNavigate();
+    const userId = localStorage.getItem('userId');
+    
+    if (!userId) {
+      alert("Please Log in to add items to cart");
+      return;
+    }
+
+    // Prepare Cart Item (Default quantity 1 for card view)
+    const cartItem = {
+        userId: parseInt(userId),
+        productId: id,
+        productType: "FURNITURE", // Specific type
+        quantity: 1
+    };
+
+    try {
+        const response = await api.post('/cart/add', cartItem);
+        
+        if(response.data.code === "00"){
+            alert(`${furnitureName} added to cart!`);
+            // Trigger Navbar Update
+            window.dispatchEvent(new Event("cartUpdated")); 
+        } else {
+            alert("Failed to add to cart: " + response.data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to server.");
+    }
+  };
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
@@ -41,7 +71,10 @@ const FurnitureCard = ({ item }) => {
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative">
+    <div 
+        onClick={() => navigate(`/furnitureDetail/${id}`)} // Make whole card clickable
+        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative cursor-pointer"
+    >
       
       {furnitureType && (
         <div className="absolute top-3 left-3 z-10">
@@ -69,7 +102,7 @@ const FurnitureCard = ({ item }) => {
         {!isOutOfStock && (
           <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button 
-              onClick={handleAddToCart}
+              onClick={handleAddToCart} // <--- Connected here
               className="p-2.5 bg-white/95 backdrop-blur-sm rounded-full text-gray-700 hover:text-teal-600 hover:bg-teal-50 transition-all shadow-sm hover:shadow-md active:scale-95"
               title="Add to Cart"
             >
@@ -114,7 +147,7 @@ const FurnitureCard = ({ item }) => {
                     </div>
                 ) : <div></div>}
 
-                {/* NEW: Stock Indicator */}
+                {/* Stock Indicator */}
                 <div className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg ${
                     isOutOfStock 
                       ? 'bg-red-50 text-red-600' 

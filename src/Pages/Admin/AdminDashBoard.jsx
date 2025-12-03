@@ -15,7 +15,7 @@ import {
 import api from '../../api/axiosConfig'; 
 
 import Navbar from '../../Components/Navbar/Navbar'; 
-import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
+import AdminNavbar from '../../Components/Navbar/AdminNavbar'
 import Footer from '../../Components/Footer/Footer'; 
 
 function AdminDashBoard() {
@@ -46,10 +46,10 @@ function AdminDashBoard() {
         // Helper to extract data or default to empty
         const getData = (result, name) => {
           if (result.status === 'fulfilled' && result.value.data.code === "00") {
-            console.log(`✅ ${name} Loaded:`, result.value.data.content.length);
+            console.log(`${name} Loaded:`, result.value.data.content.length);
             return result.value.data.content;
           } else {
-            console.error(`❌ ${name} Failed:`, result.reason || result.value?.data);
+            console.error(`${name} Failed:`, result.reason || result.value?.data);
             return [];
           }
         };
@@ -175,7 +175,7 @@ function AdminDashBoard() {
                     <table className="w-full text-left">
                       <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                         <tr>
-                          <th className="px-6 py-4">Order ID</th>
+                          {/* <th className="px-6 py-4">Order ID</th> */}
                           <th className="px-6 py-4">Product</th>
                           <th className="px-6 py-4">Customer</th>
                           <th className="px-6 py-4">Amount</th>
@@ -186,7 +186,7 @@ function AdminDashBoard() {
                         {stats.recentOrders.length > 0 ? (
                           stats.recentOrders.map((order) => (
                             <tr key={order.orderId} className="hover:bg-gray-50 transition">
-                              <td className="px-6 py-4 font-mono text-sm text-gray-500">#{order.orderId}</td>
+                              {/* <td className="px-6 py-4 font-mono text-sm text-gray-500">#{order.orderId}</td> */}
                               <td className="px-6 py-4 font-medium text-gray-900">{order.productName}</td>
                               <td className="px-6 py-4 text-sm text-gray-600">{order.username}</td>
                               <td className="px-6 py-4 font-bold text-gray-800">LKR {order.price}</td>

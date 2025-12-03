@@ -26,10 +26,40 @@ const HomedecoCard = ({ item }) => {
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock < 5;
 
-  const handleAddToCart = (e) => {
+  // --- UPDATED: Add to Cart Logic ---
+  const handleAddToCart = async (e) => {
     e.stopPropagation(); 
     if (isOutOfStock) return;
-    console.log(`Added ${decoName} to cart!`);
+
+    const userId = localStorage.getItem('userId');
+    
+    if (!userId) {
+      alert("Please Log in to add items to cart");
+      return;
+    }
+
+    // Prepare Cart Item (Default quantity 1 for card view)
+    const cartItem = {
+        userId: parseInt(userId),
+        productId: id,
+        productType: "HOMEDECO", // Specific type for Home Deco
+        quantity: 1
+    };
+
+    try {
+        const response = await api.post('/cart/add', cartItem);
+        
+        if(response.data.code === "00"){
+            alert(`${decoName} added to cart!`);
+            // Trigger Navbar Update
+            window.dispatchEvent(new Event("cartUpdated")); 
+        } else {
+            alert("Failed to add to cart: " + response.data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to server.");
+    }
   };
 
   const handleBuyNow = (e) => {
@@ -39,7 +69,10 @@ const HomedecoCard = ({ item }) => {
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative">
+    <div 
+        onClick={() => navigate(`/homedecoDetail/${id}`)} // Make whole card clickable
+        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative cursor-pointer"
+    >
       
       <div className="relative h-64 overflow-hidden bg-gray-50">
         <img 
@@ -59,7 +92,7 @@ const HomedecoCard = ({ item }) => {
         {!isOutOfStock && (
           <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button 
-              onClick={handleAddToCart}
+              onClick={handleAddToCart} // <--- Connected here
               className="p-2.5 bg-white/95 backdrop-blur-sm rounded-full text-gray-700 hover:text-teal-600 hover:bg-teal-50 transition-all shadow-sm hover:shadow-md active:scale-95"
               title="Add to Cart"
             >

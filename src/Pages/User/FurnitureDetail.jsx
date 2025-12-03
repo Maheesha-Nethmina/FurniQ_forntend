@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ShoppingCart, CreditCard, Package,
-  Ruler, Tag, CheckCircle, AlertCircle, Loader2,
+  Ruler, CheckCircle, AlertCircle, Loader2,
   Plus, Minus 
 } from 'lucide-react';
-// Adjusted imports to one level up to resolve build errors
 import api from '../../api/axiosConfig'; 
 import Navbar from '../../Components/Navbar/Navbar'; 
 import Footer from '../../Components/Footer/Footer'; 
@@ -18,8 +17,10 @@ function FurnitureDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // 1. New State for Quantity Selection
+  // State for Quantity Selection
   const [selectedQty, setSelectedQty] = useState(1);
+  // State for Add to Cart loading button feedback
+  const [addingToCart, setAddingToCart] = useState(false);
 
   // Fetch item data
   useEffect(() => {
@@ -73,30 +74,52 @@ function FurnitureDetail() {
     }
   };
 
-  // --- NEW: Auth Check Handlers ---
-
-  const handleAddToCart = () => {
+  // --- UPDATED: Add To Cart Handler (Database Backed) ---
+  const handleAddToCart = async () => {
     const userId = localStorage.getItem('userId');
     
     if (!userId) {
-      alert("Please Log in to system");
+      alert("Please Log in to add items to cart");
+      navigate('/login'); // Optional: redirect to login
       return;
     }
 
-    // Logic for adding to cart
-    console.log(`Added ${selectedQty} items to cart for user ${userId}`);
-    alert("Item added to cart!");
+    setAddingToCart(true);
+
+    const cartItem = {
+        userId: parseInt(userId),
+        productId: item.id,
+        productType: "FURNITURE", // Specific type for Furniture items
+        quantity: selectedQty
+    };
+
+    try {
+        const response = await api.post('/cart/add', cartItem);
+        
+        if(response.data.code === "00"){
+            // Success Feedback
+            alert("Item added to cart successfully!");
+        } else {
+            alert("Failed to add to cart: " + response.data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to server. Please try again.");
+    } finally {
+        setAddingToCart(false);
+    }
   };
 
+  // Buy Now Handler (Direct Checkout)
   const handleBuyNow = () => {
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
-      alert("Please Log in to system");
+      alert("Please Log in to proceed");
       return;
     }
 
-    // Redirect to payment if logged in
+    // Redirect to payment with state
     navigate(`/payment/${item.id}`, { 
         state: { 
             item: item, 
@@ -195,7 +218,7 @@ function FurnitureDetail() {
               </div>
 
               <div className="mt-auto space-y-4">
-                {/* 3. Quantity Selector & Total Price Display */}
+                {/* Quantity Selector & Total Price Display */}
                 {!isOutOfStock && (
                   <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
                     
@@ -240,11 +263,15 @@ function FurnitureDetail() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button 
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || addingToCart}
                     className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
                     onClick={handleAddToCart}
                   >
-                    <ShoppingCart size={20} /> Add to Cart
+                    {addingToCart ? (
+                        <> <Loader2 size={20} className="animate-spin" /> Adding... </>
+                    ) : (
+                        <> <ShoppingCart size={20} /> Add to Cart </>
+                    )}
                   </button>
 
                   <button 
