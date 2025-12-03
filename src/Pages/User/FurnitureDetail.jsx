@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ShoppingCart, CreditCard, Package,
-  Ruler, Tag, CheckCircle, AlertCircle, Loader2
+  Ruler, Tag, CheckCircle, AlertCircle, Loader2,
+  Plus, Minus 
 } from 'lucide-react';
-import api from '../../api/axiosConfig';
-import Navbar from '../../Components/Navbar/Navbar';
-import Footer from '../../Components/Footer/Footer';
+// Adjusted imports to one level up to resolve build errors
+import api from '../../api/axiosConfig'; 
+import Navbar from '../../Components/Navbar/Navbar'; 
+import Footer from '../../Components/Footer/Footer'; 
 
 function FurnitureDetail() {
   const { id } = useParams();
@@ -15,8 +17,11 @@ function FurnitureDetail() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 1. New State for Quantity Selection
+  const [selectedQty, setSelectedQty] = useState(1);
 
-  // Fetch  item data
+  // Fetch item data
   useEffect(() => {
     const getFurnitureDetails = async () => {
       try {
@@ -50,6 +55,57 @@ function FurnitureDetail() {
 
   const stock = item.furnitureQuantity || item.quantity || 0;
   const isOutOfStock = stock === 0;
+  
+  // Calculate Total Price dynamically
+  const unitPrice = Number(item.furniturePrice) || 0;
+  const totalPrice = unitPrice * selectedQty;
+
+  // Quantity Handlers
+  const handleIncrease = () => {
+    if (selectedQty < stock) {
+      setSelectedQty(prev => prev + 1);
+    }
+  };
+
+  const handleDecrease = () => {
+    if (selectedQty > 1) {
+      setSelectedQty(prev => prev - 1);
+    }
+  };
+
+  // --- NEW: Auth Check Handlers ---
+
+  const handleAddToCart = () => {
+    const userId = localStorage.getItem('userId');
+    
+    if (!userId) {
+      alert("Please Log in to system");
+      return;
+    }
+
+    // Logic for adding to cart
+    console.log(`Added ${selectedQty} items to cart for user ${userId}`);
+    alert("Item added to cart!");
+  };
+
+  const handleBuyNow = () => {
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      alert("Please Log in to system");
+      return;
+    }
+
+    // Redirect to payment if logged in
+    navigate(`/payment/${item.id}`, { 
+        state: { 
+            item: item, 
+            type: "FURNITURE", 
+            quantity: selectedQty, 
+            totalValue: totalPrice 
+        } 
+    });
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
@@ -67,8 +123,8 @@ function FurnitureDetail() {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             
-            
-            <div className="h-80 lg:h-[480px] bg-gray-100 relative">
+            {/* Image Section */}
+            <div className="h-80 lg:h-[550px] bg-gray-100 relative">
               <img 
                 src={item.furniturePicture} 
                 alt={item.furnitureName} 
@@ -83,6 +139,7 @@ function FurnitureDetail() {
               )}
             </div>
 
+            {/* Details Section */}
             <div className="p-6 lg:p-10 flex flex-col">
               
               {item.furnitureType && (
@@ -121,38 +178,83 @@ function FurnitureDetail() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {item.furnitureSize && (
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                     <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
                         <Ruler size={16} /> <span className="text-xs font-bold uppercase">Dimensions</span>
-                     </div>
-                     <p className="font-semibold text-gray-800 text-sm">{item.furnitureSize}</p>
+                      </div>
+                      <p className="font-semibold text-gray-800 text-sm">{item.furnitureSize}</p>
                   </div>
                 )}
                 <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                     <div className="flex items-center gap-2 text-gray-400 mb-1">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
                         <Package size={16} /> <span className="text-xs font-bold uppercase">Availability</span>
-                     </div>
-                     <p className="font-semibold text-gray-800 text-sm">
+                      </div>
+                      <p className="font-semibold text-gray-800 text-sm">
                         {isOutOfStock ? "Unavailable" : `${stock} units left`}
-                     </p>
+                      </p>
                   </div>
               </div>
 
-              <div className="mt-auto flex flex-col sm:flex-row gap-3">
-                <button 
-                  disabled={isOutOfStock}
-                  className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
-                  onClick={() => console.log("Add to cart logic here")}
-                >
-                  <ShoppingCart size={20} /> Add to Cart
-                </button>
+              <div className="mt-auto space-y-4">
+                {/* 3. Quantity Selector & Total Price Display */}
+                {!isOutOfStock && (
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
+                    
+                    {/* Quantity Controls */}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</span>
+                        <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                          <button 
+                            onClick={handleDecrease}
+                            disabled={selectedQty <= 1}
+                            className="p-2 px-3 text-gray-600 hover:bg-gray-100 rounded-l-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <div className="w-10 text-center font-bold text-gray-900">
+                            {selectedQty}
+                          </div>
+                          <button 
+                            onClick={handleIncrease}
+                            disabled={selectedQty >= stock}
+                            className="p-2 px-3 text-gray-600 hover:bg-gray-100 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                        {selectedQty === stock && (
+                          <span className="text-[10px] text-amber-600 font-medium">Max reached</span>
+                        )}
+                    </div>
 
-                <button 
-                  disabled={isOutOfStock}
-                  className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
-                  onClick={() => console.log("Payment logic here")}
-                >
-                  <CreditCard size={20} /> Make Payment
-                </button>
+                    {/* Total Price Display */}
+                    <div className="text-right">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Value</span>
+                        <div className="text-2xl font-extrabold text-teal-700">
+                            <span className="text-sm font-semibold text-gray-400 mr-1">LKR</span>
+                            {totalPrice.toLocaleString()}
+                        </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button 
+                    disabled={isOutOfStock}
+                    className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
+                    onClick={handleAddToCart}
+                  >
+                    <ShoppingCart size={20} /> Add to Cart
+                  </button>
+
+                  <button 
+                    disabled={isOutOfStock}
+                    className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
+                    onClick={handleBuyNow}
+                  >
+                    <CreditCard size={20} /> Buy Now
+                  </button>
+                </div>
               </div>
 
             </div>

@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, X, Menu, ShoppingCart } from "lucide-react";
-// 1. Import the centralized API config instead of axios
 import { useAuth } from "../../context/AuthContext";
 import api from '../../api/axiosConfig';
-
-// 2. Removed the hardcoded API_URL constant
 
 const Navbar = () => {
   const NAV_LINKS = [
@@ -57,9 +54,6 @@ const Navbar = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  //check the url
-  console.log("Current Base URL:", import.meta.env.VITE_API_BASE_URL);
-
   const handleSubmit = async () => {
     setLoading(true);
     setMessage("");
@@ -80,6 +74,11 @@ const Navbar = () => {
         });
 
         setMessage(res.data.message || "Registration successful!");
+
+        // --- FIX: Explicitly save userId for PaymentPage ---
+        if (res.data.id) {
+            localStorage.setItem("userId", res.data.id);
+        }
 
         // Auto-login the user
         login(res.data);
@@ -106,6 +105,11 @@ const Navbar = () => {
 
         setMessage(res.data.message || "Login successful!");
 
+        // --- FIX: Explicitly save userId for PaymentPage ---
+        if (res.data.id) {
+            localStorage.setItem("userId", res.data.id);
+        }
+
         // Login the user
         login(res.data);
 
@@ -128,12 +132,19 @@ const Navbar = () => {
         }, 1200);
       }
     } catch (err) {
-      // Handle errors gracefully
       const errorMsg = err.response?.data?.error || err.response?.data?.message || "Something went wrong. Please try again.";
       setMessage(errorMsg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    // Clear userId on logout
+    localStorage.removeItem("userId");
+    setDropdownOpen(false);
+    navigate("/");
   };
 
   const renderLinks = (isMobile = false) => (
@@ -161,15 +172,8 @@ const Navbar = () => {
     </ul>
   );
 
-  const handleLogout = () => {
-    logout();
-    setDropdownOpen(false);
-    navigate("/");
-  };
-
   return (
     <>
-      {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           scrolled
@@ -188,7 +192,6 @@ const Navbar = () => {
           {renderLinks()}
 
           <div className="flex items-center space-x-4">
-            {/* Cart Icon Link */}
             {user && user.role === "USER" && (
               <Link
                 to="/cart"

@@ -28,7 +28,7 @@ function Footer() {
           <ul className="space-y-3 text-gray-300">
             <li className="flex items-center gap-3 hover:text-amber-400">
               <Mail className="w-5 h-5" />
-              <span>www.furniqfurniture@gmail.com</span>
+              <span>www.furniturefurniq@gmail.com</span>
             </li>
             <li className="flex items-center gap-3 hover:text-amber-400">
               <Phone className="w-5 h-5" />
