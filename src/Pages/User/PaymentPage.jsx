@@ -147,7 +147,9 @@ const PaymentPage = () => {
       email: formData.email,
       mobileNumber: formData.mobileNumber,
       address: formData.address,
-      oderType: itemType 
+      oderType: itemType,
+      oderStatus: "To Be Ship", 
+      paymentStatus: "yes"
     };
 
     try {

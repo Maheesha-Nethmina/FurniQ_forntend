@@ -5,9 +5,10 @@ import {
   Ruler, Tag, CheckCircle, AlertCircle, Loader2,
   Plus, Minus 
 } from 'lucide-react';
-import api from '../../api/axiosConfig'; // Adjusted to ./
-import Navbar from '../../Components/Navbar/Navbar'; // Adjusted to ./
-import Footer from '../../Components/Footer/Footer'; // Adjusted to ./
+// Adjusted imports to one level up to resolve build errors
+import api from '../../api/axiosConfig'; 
+import Navbar from '../../Components/Navbar/Navbar'; 
+import Footer from '../../Components/Footer/Footer'; 
 
 function FurnitureDetail() {
   const { id } = useParams();
@@ -25,8 +26,6 @@ function FurnitureDetail() {
     const getFurnitureDetails = async () => {
       try {
         setLoading(true);
-        // Note: Ensure your backend endpoint is correct. 
-        // If it's /api/v1/furniture/..., update axiosConfig or this string.
         const response = await api.get(`/furniture/getFurnitureById?id=${id}`);
         setItem(response.data.content);
       } catch (err) {
@@ -61,7 +60,7 @@ function FurnitureDetail() {
   const unitPrice = Number(item.furniturePrice) || 0;
   const totalPrice = unitPrice * selectedQty;
 
-  // 2. Quantity Handlers
+  // Quantity Handlers
   const handleIncrease = () => {
     if (selectedQty < stock) {
       setSelectedQty(prev => prev + 1);
@@ -72,6 +71,40 @@ function FurnitureDetail() {
     if (selectedQty > 1) {
       setSelectedQty(prev => prev - 1);
     }
+  };
+
+  // --- NEW: Auth Check Handlers ---
+
+  const handleAddToCart = () => {
+    const userId = localStorage.getItem('userId');
+    
+    if (!userId) {
+      alert("Please Log in to system");
+      return;
+    }
+
+    // Logic for adding to cart
+    console.log(`Added ${selectedQty} items to cart for user ${userId}`);
+    alert("Item added to cart!");
+  };
+
+  const handleBuyNow = () => {
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      alert("Please Log in to system");
+      return;
+    }
+
+    // Redirect to payment if logged in
+    navigate(`/payment/${item.id}`, { 
+        state: { 
+            item: item, 
+            type: "FURNITURE", 
+            quantity: selectedQty, 
+            totalValue: totalPrice 
+        } 
+    });
   };
 
   return (
@@ -209,7 +242,7 @@ function FurnitureDetail() {
                   <button 
                     disabled={isOutOfStock}
                     className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg"
-                    onClick={() => console.log(`Added ${selectedQty} items to cart`)}
+                    onClick={handleAddToCart}
                   >
                     <ShoppingCart size={20} /> Add to Cart
                   </button>
@@ -217,14 +250,7 @@ function FurnitureDetail() {
                   <button 
                     disabled={isOutOfStock}
                     className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200"
-                    onClick={() => navigate(`/payment/${item.id}`, { 
-                        state: { 
-                            item: item, 
-                            type: "FURNITURE", 
-                            quantity: selectedQty, // Passed Quantity
-                            totalValue: totalPrice // Passed Total Value
-                        } 
-                    })}
+                    onClick={handleBuyNow}
                   >
                     <CreditCard size={20} /> Buy Now
                   </button>

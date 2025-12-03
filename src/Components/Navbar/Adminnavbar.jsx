@@ -14,8 +14,8 @@ import {
 const navLinks = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
   { name: 'User Details', icon: Users, path: '/userdetails' },
-  { name: 'Furniture Orders', icon: Armchair, path: '/order-furniture' },
-  { name: 'Home Deco Orders', icon: Lamp, path: '/order-homedeco' },
+  { name: 'Furniture Inventory', icon: Armchair, path: '/order-furniture' },
+  { name: 'Home Deco Inventory', icon: Lamp, path: '/order-homedeco' },
   // { name: 'Add New Furniture', icon: PackagePlus, path: '/add-item' },
   // { name: 'Add New Deco', icon: Wand2, path: '/add-deco' },
 ];
