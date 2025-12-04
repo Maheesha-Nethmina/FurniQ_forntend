@@ -4,20 +4,19 @@ import {
   ArrowLeft, Truck, MapPin, 
   CreditCard, User, Phone, Mail, Loader2
 } from 'lucide-react';
-// Corrected imports to prevent build errors
+
 import api from '../../api/axiosConfig'; 
 import Navbar from '../../Components/Navbar/Navbar';
 import Footer from '../../Components/Footer/Footer';
+// Import the Stripe Modal created earlier
+import StripePaymentModal from '../../Components/Payment/StripePaymentModal';
 
 const PaymentPage = () => {
   const { id: productId } = useParams(); 
   const location = useLocation();
   const navigate = useNavigate();
   
-  // 1. Get User ID from Local Storage
   const storageUserId = localStorage.getItem('userId');
-
-  console.log("DEBUG: Payment Page Loaded. Storage UserID:", storageUserId);
 
   const rawItem = location.state?.item;
   const itemType = location.state?.type || "FURNITURE"; 
@@ -48,44 +47,34 @@ const PaymentPage = () => {
   const item = getNormalizedItem();
 
   const [formData, setFormData] = useState({
-    userId: storageUserId || "", 
-    username: "", 
+    username: "",
     email: "",
     mobileNumber: "",
     address: ""
   });
 
   const [loading, setLoading] = useState(false);
+
+  // --- Payment State ---
+  const [clientSecret, setClientSecret] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
-  // 2. Fetch User Data on Mount
+  // Fetch User Data on Mount
   useEffect(() => {
     const fetchUserDetails = async () => {
-      // Debugging: Check if ID exists
-      if (!storageUserId) {
-        console.warn("DEBUG: No User ID found in LocalStorage. Please Log Out and Log In again.");
-        return;
-      }
+      if (!storageUserId) return;
 
       try {
-        // console.log(`DEBUG: Fetching user details for ID: ${storageUserId}...`);
         const response = await api.get(`/auth/getUser/${storageUserId}`);
-        
-        // console.log("DEBUG: API Response:", response.data);
-
         if (response.data.code === "00") { 
           const user = response.data.content;
-          // console.log("DEBUG: User Details Found:", user);
-          
-          // 3. Populate State with DB Data
           setFormData(prev => ({
             ...prev,
             username: user.username || "", 
             email: user.email || "",
             mobileNumber: user.mobileNumber || "", 
-            address: "" // Address kept empty for user to fill
+            address: "" 
           }));
-        } else {
-            console.error("DEBUG: Failed to fetch user. Code:", response.data.code);
         }
       } catch (error) {
         console.error("DEBUG: Error fetching user details:", error);
@@ -118,23 +107,48 @@ const PaymentPage = () => {
 
   const totalAmount = subTotal + shippingCost;
 
-  // --- Handlers ---
   const handleChange = (e) => {
-    // Prevent editing of username and email
     if (e.target.name === 'username' || e.target.name === 'email') return;
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePlaceOrder = async (e) => {
+  // --- STEP 1: INITIATE PAYMENT (Get Client Secret) ---
+  const handleInitiatePayment = async (e) => {
     e.preventDefault();
     
-    // console.log("DEBUG: Placing Order with Data:", formData);
-
     if (!formData.address || !formData.mobileNumber) {
       alert("Please fill in your address and mobile number.");
       return;
     }
 
+    setLoading(true);
+
+    try {
+        // Request Payment Intent from Backend
+        const paymentPayload = {
+            amount: Math.round(totalAmount * 100), // Stripe expects cents
+            currency: "lkr"
+        };
+
+        const response = await api.post('/payment/create-payment-intent', paymentPayload);
+        
+        if (response.data.clientSecret) {
+            setClientSecret(response.data.clientSecret);
+            setShowPaymentModal(true); // Open the Modal
+        } else {
+            alert("Failed to initialize payment gateway.");
+        }
+    } catch (error) {
+        console.error("Payment Init Error:", error);
+        alert("Could not connect to payment gateway.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  // --- STEP 2: SAVE ORDER (Called after Stripe Success) ---
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false);
     setLoading(true);
 
     const orderDTO = {
@@ -149,22 +163,21 @@ const PaymentPage = () => {
       address: formData.address,
       oderType: itemType,
       oderStatus: "To Be Ship", 
-      paymentStatus: "yes"
+      paymentStatus: "PAID (Stripe)" // Updated Status
     };
 
     try {
       const response = await api.post('/order/saveNewOrder', orderDTO);
-      // console.log("DEBUG: Order Response:", response.data);
       
       if (response.data.code === "00") {
-        alert("Order Placed Successfully!");
+        alert("Payment Successful! Order Placed.");
         navigate(itemType === "HOMEDECO" ? '/homedeco' : '/furniture');
       } else {
-        alert("Order Failed: " + response.data.message);
+        alert("Payment collected but Order Failed: " + response.data.message);
       }
     } catch (error) {
-      console.error("DEBUG: Payment Error:", error);
-      alert("Failed to place order.");
+      console.error("Save Order Error:", error);
+      alert("Critical Error: Payment taken but order not saved. Contact Support.");
     } finally {
       setLoading(false);
     }
@@ -173,6 +186,16 @@ const PaymentPage = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
+
+      {/* --- RENDER STRIPE MODAL --- */}
+      {showPaymentModal && clientSecret && (
+        <StripePaymentModal 
+            clientSecret={clientSecret} 
+            amount={totalAmount}
+            onClose={() => setShowPaymentModal(false)}
+            onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         
@@ -192,7 +215,7 @@ const PaymentPage = () => {
                 <MapPin className="text-teal-600" /> Shipping Details
               </h2>
 
-              <form className="space-y-6">
+              <form onSubmit={handleInitiatePayment} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* Name (READ ONLY) */}
@@ -204,7 +227,7 @@ const PaymentPage = () => {
                         type="text" 
                         name="username"
                         value={formData.username} 
-                        readOnly // <--- BLOCKED
+                        readOnly 
                         className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
                       />
                     </div>
@@ -219,7 +242,7 @@ const PaymentPage = () => {
                         type="email" 
                         name="email"
                         value={formData.email} 
-                        readOnly // <--- BLOCKED
+                        readOnly 
                         className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl focus:outline-none cursor-not-allowed select-none"
                       />
                     </div>
@@ -316,7 +339,7 @@ const PaymentPage = () => {
                 </div>
 
                 <button 
-                  onClick={handlePlaceOrder}
+                  onClick={handleInitiatePayment}
                   disabled={loading}
                   className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-teal-700 transition shadow-lg hover:shadow-teal-200/50 disabled:bg-gray-400 disabled:cursor-not-allowed mt-4"
                 >
@@ -326,10 +349,13 @@ const PaymentPage = () => {
                     </>
                   ) : (
                     <>
-                      <CreditCard size={20} /> Pay Now
+                      <CreditCard size={20} /> Pay & Place Order
                     </>
                   )}
                 </button>
+                <p className="text-xs text-center text-gray-400 mt-4">
+                    Secured by Stripe
+                </p>
               </div>
             </div>
           </div>
