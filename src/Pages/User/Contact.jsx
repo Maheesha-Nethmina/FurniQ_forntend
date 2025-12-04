@@ -12,7 +12,7 @@ const faqs = [
   {
     question: "Do you offer delivery?",
     answer:
-      "Yes, FurniQ offers free delivery for all orders over $500 within the Matara district. For other areas, standard delivery charges apply.",
+      "Yes, FurniQ offers free delivery for all orders over Rs.50000.00 within the Matara district. For other areas, standard delivery charges apply.",
   },
   {
     question: "What is your return policy?",

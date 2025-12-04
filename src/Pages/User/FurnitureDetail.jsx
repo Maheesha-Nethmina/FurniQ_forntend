@@ -80,7 +80,7 @@ function FurnitureDetail() {
     
     if (!userId) {
       alert("Please Log in to add items to cart");
-      navigate('/login'); 
+      navigate('/furniture'); // Optional: redirect to login
       return;
     }
 

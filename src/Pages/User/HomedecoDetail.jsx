@@ -82,7 +82,7 @@ function HomedecoDetail() {
     
     if (!userId) {
       alert("Please Log in to system");
-      navigate('/login'); // Optional redirect
+      navigate('/homedeco'); // Optional redirect
       return;
     }
 
