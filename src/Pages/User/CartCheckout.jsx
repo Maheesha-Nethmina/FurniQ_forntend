@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, CreditCard, Phone, User, Loader2 } from 'lucide-react';
 
-// --- IMPORTS FIXED BASED ON YOUR FILE STRUCTURE ---
-// 1. Go up from "User" -> "Pages" -> "src" (../../)
-// 2. Then go into "api" or "Components"
+// --- IMPORTS ---
 import api from '../../api/axiosConfig'; 
 import Navbar from '../../Components/Navbar/Navbar';
 import Footer from '../../Components/Footer/Footer';
+import StripePaymentModal from '../../Components/Payment/StripePaymentModal'; // Ensure path is correct
 
 const CartCheckout = () => {
   const navigate = useNavigate();
@@ -16,6 +15,10 @@ const CartCheckout = () => {
   const [loading, setLoading] = useState(false);
   const [cartTotal, setCartTotal] = useState(0);
   
+  // --- Payment State ---
+  const [clientSecret, setClientSecret] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   // Form State
   const [formData, setFormData] = useState({
     username: "",
@@ -27,14 +30,13 @@ const CartCheckout = () => {
   // 1. Fetch User Details & Cart Total on Load
   useEffect(() => {
     if (!userId) { 
-        // If no user is logged in, redirect to login
         navigate('/login'); 
         return; 
     }
 
     const fetchData = async () => {
       try {
-        // A. Fetch User Info to auto-fill the form
+        // A. Fetch User Info
         const userRes = await api.get(`/auth/getUser/${userId}`);
         if (userRes.data.code === "00") {
             const u = userRes.data.content;
@@ -43,15 +45,14 @@ const CartCheckout = () => {
                 username: u.username || "",
                 email: u.email || "",
                 mobileNumber: u.mobileNumber || "",
-                address: "" // Leave address empty for them to fill
+                address: "" 
             }));
         }
 
-        // B. Fetch Cart to Calculate Total Price
+        // B. Fetch Cart
         const cartRes = await api.get(`/cart/get/${userId}`);
         if (cartRes.data.code === "00") {
             const items = cartRes.data.content;
-            // Calculate total: sum of (price * quantity) for all items
             const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
             setCartTotal(total);
         }
@@ -67,48 +68,7 @@ const CartCheckout = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 3. Handle Place Order
-  const handlePlaceOrder = async (e) => {
-    e.preventDefault();
-
-    // Basic Validation
-    if (!formData.address || !formData.mobileNumber) {
-        alert("Please fill in your address and phone number.");
-        return;
-    }
-
-    setLoading(true);
-
-    // Prepare Payload for Backend
-    const checkoutRequest = {
-        userId: parseInt(userId),
-        username: formData.username,
-        email: formData.email,
-        mobileNumber: formData.mobileNumber,
-        address: formData.address,
-        paymentStatus: "Paid" // You can change this to "Pending" or "COD" if needed
-    };
-
-    try {
-        // Send request to the endpoint we created: /api/v1/order/checkout
-        const response = await api.post('/order/checkout', checkoutRequest);
-        
-        if (response.data.code === "00") {
-            alert("Order Placed Successfully!");
-            // Redirect to Furniture/Home page after success
-            navigate('/furniture'); 
-        } else {
-            alert("Order Failed: " + response.data.message);
-        }
-    } catch (error) {
-        console.error("Checkout Error:", error);
-        alert("Transaction Failed. Please try again.");
-    } finally {
-        setLoading(false);
-    }
-  };
-
-  // 4. Calculate Shipping Logic
+  // 3. Calculate Shipping Logic
   let shippingCost = 0;
   if (cartTotal > 0) {
       if (cartTotal < 5000) shippingCost = 500;
@@ -117,12 +77,88 @@ const CartCheckout = () => {
       else if (cartTotal >= 25000 && cartTotal < 50000) shippingCost = 2500;
       else shippingCost = 3500;
   }
-  
   const grandTotal = cartTotal + shippingCost;
+
+  // --- STEP 1: INITIATE PAYMENT (Get Client Secret) ---
+  const handleInitiatePayment = async (e) => {
+    e.preventDefault();
+
+    if (!formData.address || !formData.mobileNumber) {
+        alert("Please fill in your address and phone number.");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        // Call Backend to get Stripe Client Secret
+        const paymentPayload = {
+            amount: Math.round(grandTotal * 100), // Convert to cents (integer)
+            currency: "lkr"
+        };
+
+        const response = await api.post('/payment/create-payment-intent', paymentPayload);
+        
+        if (response.data.clientSecret) {
+            setClientSecret(response.data.clientSecret);
+            setShowPaymentModal(true); // Open the Modal
+        } else {
+            alert("Failed to initialize payment gateway.");
+        }
+    } catch (error) {
+        console.error("Payment Init Error:", error);
+        alert("Could not connect to payment gateway.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  // --- STEP 2: SAVE ORDER (After Successful Payment) ---
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false); // Close Modal
+    setLoading(true); // Show loading on main page
+
+    const checkoutRequest = {
+        userId: parseInt(userId),
+        username: formData.username,
+        email: formData.email,
+        mobileNumber: formData.mobileNumber,
+        address: formData.address,
+        paymentStatus: "PAID (Stripe)" // Mark as Paid
+    };
+
+    try {
+        const response = await api.post('/order/checkout', checkoutRequest);
+        
+        if (response.data.code === "00") {
+            alert("Payment Successful! Order Placed.");
+            // Refresh navbar badge count
+            window.dispatchEvent(new Event("cartUpdated")); 
+            navigate('/furniture'); 
+        } else {
+            alert("Payment success but Order Failed: " + response.data.message);
+        }
+    } catch (error) {
+        console.error("Save Order Error:", error);
+        alert("Critical Error: Payment taken but order not saved. Contact Support.");
+    } finally {
+        setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
       <Navbar />
+
+      {/* --- RENDER STRIPE MODAL IF ACTIVE --- */}
+      {showPaymentModal && clientSecret && (
+        <StripePaymentModal 
+            clientSecret={clientSecret} 
+            amount={grandTotal}
+            onClose={() => setShowPaymentModal(false)}
+            onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       <div className="flex-grow max-w-4xl mx-auto px-4 py-12 pt-24 w-full">
         
@@ -141,7 +177,8 @@ const CartCheckout = () => {
                     <MapPin className="text-teal-600" /> Shipping Details
                 </h2>
                 
-                <form onSubmit={handlePlaceOrder} className="space-y-4">
+                {/* Note: Changed onSubmit to handleInitiatePayment */}
+                <form onSubmit={handleInitiatePayment} className="space-y-4">
                     {/* Name (Read Only) */}
                     <div>
                         <label className="text-sm font-bold text-gray-700">Full Name</label>
@@ -226,8 +263,9 @@ const CartCheckout = () => {
                     </div>
                 </div>
                 
+                {/* Changed onClick to handleInitiatePayment */}
                 <button 
-                    onClick={handlePlaceOrder} 
+                    onClick={handleInitiatePayment} 
                     disabled={loading || cartTotal === 0} 
                     className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex justify-center gap-2 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg hover:shadow-teal-200/50"
                 >
@@ -239,7 +277,7 @@ const CartCheckout = () => {
                 </button>
 
                 <p className="text-xs text-center text-gray-400 mt-4">
-                    Secure checkout powered by FurniQ
+                    Secured by Stripe
                 </p>
             </div>
         </div>
