@@ -7,7 +7,7 @@ import { MapPin, Phone, Mail } from "lucide-react";
 import Hero from "../../Components/Hero/Hero";
 
 import aboutHeroImage from "../../assets/hero02.webp"; 
-import aboutStoryImage from "../../assets/image03.jpg";
+import aboutStoryImage from "../../assets/fur9.jpg";
 
 const containerVariants = {
   hidden: { opacity: 0 },
