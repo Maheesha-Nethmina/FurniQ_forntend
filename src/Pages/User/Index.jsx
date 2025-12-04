@@ -4,8 +4,11 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axiosConfig"; 
 import Navbar from "../../Components/Navbar/Navbar";
 import Mainhero_section from "../../Components/Hero/Mainhero_section";
-import trendingImg from "../../assets/image03.jpg"; 
+import trendingImg from "../../assets/fur8.jpg"; 
+import whyusImg from "../../assets/image03.jpg"; 
 import Footer from "../../Components/Footer/Footer";
+
+
 
 import {
   Truck,
@@ -538,7 +541,7 @@ function Index() {
           viewport={{ once: true }}
         >
           <motion.img
-            src={trendingImg}
+            src={whyusImg}
             alt="Trending Product"
             className="rounded-2xl shadow-xl w-full object-cover h-[420px]"
             whileHover={{ scale: 1.05 }}
