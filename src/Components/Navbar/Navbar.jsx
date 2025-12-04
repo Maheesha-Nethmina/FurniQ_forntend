@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, X, Menu, ShoppingCart } from "lucide-react";
-import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-
-const API_URL = "http://localhost:8080/api/auth";
+import api from '../../api/axiosConfig';
 
 const Navbar = () => {
   const NAV_LINKS = [
@@ -68,22 +66,26 @@ const Navbar = () => {
           return;
         }
 
-        const res = await axios.post(`${API_URL}/register`, {
+        const res = await api.post('/auth/register', {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           mobileNumber: formData.mobileNumber,
         });
 
-        // --- THIS IS THE NEW AUTO-LOGIN LOGIC ---
         setMessage(res.data.message || "Registration successful!");
 
-        // 1. Immediately log the user in with the response data
+        // --- FIX: Explicitly save userId for PaymentPage ---
+        if (res.data.id) {
+            localStorage.setItem("userId", res.data.id);
+        }
+
+        // Auto-login the user
         login(res.data);
 
-        // 2. Close the modal and reset the form
+        // Close modal
         setTimeout(() => {
-          setAuthModal(null); // Close modal
+          setAuthModal(null);
           setFormData({
             username: "",
             email: "",
@@ -93,25 +95,30 @@ const Navbar = () => {
           });
           setMessage("");
         }, 1200);
-        // --- END OF MODIFICATION ---
 
       } else if (authModal === "login") {
-        const res = await axios.post(`${API_URL}/login`, {
+        
+        const res = await api.post('/auth/login', {
           email: formData.email,
           password: formData.password,
         });
 
         setMessage(res.data.message || "Login successful!");
 
-        //Use our context to log the user in
+        // --- FIX: Explicitly save userId for PaymentPage ---
+        if (res.data.id) {
+            localStorage.setItem("userId", res.data.id);
+        }
+
+        // Login the user
         login(res.data);
 
-        // Check the role and redirect if admin
+        // Check role and navigate
         if (res.data.role === "ADMIN") {
           navigate("/admin");
         }
 
-        // reset form and close modal after success
+        // Close modal
         setTimeout(() => {
           setAuthModal(null);
           setFormData({
@@ -125,13 +132,19 @@ const Navbar = () => {
         }, 1200);
       }
     } catch (err) {
-      setMessage(
-        err.response?.data?.error ||
-          "Something went wrong. Please try again."
-      );
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || "Something went wrong. Please try again.";
+      setMessage(errorMsg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    // Clear userId on logout
+    localStorage.removeItem("userId");
+    setDropdownOpen(false);
+    navigate("/");
   };
 
   const renderLinks = (isMobile = false) => (
@@ -159,15 +172,8 @@ const Navbar = () => {
     </ul>
   );
 
-  const handleLogout = () => {
-    logout();
-    setDropdownOpen(false);
-    navigate("/");
-  };
-
   return (
     <>
-      {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           scrolled
@@ -186,7 +192,6 @@ const Navbar = () => {
           {renderLinks()}
 
           <div className="flex items-center space-x-4">
-            {/* Cart Icon Link */}
             {user && user.role === "USER" && (
               <Link
                 to="/cart"

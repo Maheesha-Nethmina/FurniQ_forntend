@@ -3,32 +3,34 @@ import { Filter, Loader2, AlertCircle, ShoppingCart, Ruler, Layers, CreditCard, 
 import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 
-
 import Navbar from '../../Components/Navbar/Navbar';
 import Hero from "../../Components/Hero/Hero";
 import Footer from "../../Components/Footer/Footer";
-import homedecoHeroImage from "../../assets/fur7.jpeg";
+import FurnitureHeroImage from "../../assets/fur6.jpeg";
 
-const HomedecoCard = ({ item }) => {
+const FurnitureCard = ({ item }) => {
   const navigate = useNavigate();
 
-  const { 
-    id, 
-    decoName, 
-    decoPrice, 
-    decoPicture, 
-    decoDetails, 
-    decoSize, 
-    quantity 
+  const {
+    id,
+    furnitureName,
+    furniturePrice,
+    furniturePicture,
+    furnitureDetails,
+    furnitureSize,
+    furnitureType,
+    furnitureQuantity,
+    quantity
   } = item;
 
-  const stock = quantity || 0;
+  const stock = furnitureQuantity !== undefined ? furnitureQuantity : (quantity !== undefined ? quantity : 0);
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock < 5;
 
   // --- UPDATED: Add to Cart Logic ---
   const handleAddToCart = async (e) => {
-    e.stopPropagation(); 
+    e.stopPropagation(); // Stop clicking the card from navigating to details
+    
     if (isOutOfStock) return;
 
     const userId = localStorage.getItem('userId');
@@ -42,7 +44,7 @@ const HomedecoCard = ({ item }) => {
     const cartItem = {
         userId: parseInt(userId),
         productId: id,
-        productType: "HOMEDECO", // Specific type for Home Deco
+        productType: "FURNITURE", // Specific type
         quantity: 1
     };
 
@@ -50,7 +52,7 @@ const HomedecoCard = ({ item }) => {
         const response = await api.post('/cart/add', cartItem);
         
         if(response.data.code === "00"){
-            alert(`${decoName} added to cart!`);
+            alert(`${furnitureName} added to cart!`);
             // Trigger Navbar Update
             window.dispatchEvent(new Event("cartUpdated")); 
         } else {
@@ -65,19 +67,27 @@ const HomedecoCard = ({ item }) => {
   const handleBuyNow = (e) => {
     e.stopPropagation();
     if (isOutOfStock) return;
-    navigate(`/homedecoDetail/${id}`); 
+    navigate(`/furnitureDetail/${id}`);
   };
 
   return (
     <div 
-        onClick={() => navigate(`/homedecoDetail/${id}`)} // Make whole card clickable
+        onClick={() => navigate(`/furnitureDetail/${id}`)} // Make whole card clickable
         className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full relative cursor-pointer"
     >
       
+      {furnitureType && (
+        <div className="absolute top-3 left-3 z-10">
+          <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-full uppercase tracking-widest shadow-sm">
+            {furnitureType}
+          </span>
+        </div>
+      )}
+
       <div className="relative h-64 overflow-hidden bg-gray-50">
         <img 
-          src={decoPicture || "https://via.placeholder.com/400x300?text=No+Image"} 
-          alt={decoName}
+          src={furniturePicture || "https://via.placeholder.com/400x300?text=No+Image"} 
+          alt={furnitureName}
           className={`w-full h-full object-cover object-center transition-transform duration-700 ${isOutOfStock ? 'grayscale opacity-70' : 'group-hover:scale-105'}`}
         />
         
@@ -114,26 +124,30 @@ const HomedecoCard = ({ item }) => {
         )}
       </div>
 
+      {/* Content Section */}
       <div className="p-5 flex flex-col flex-grow">
         <div className="mb-3">
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-1" title={decoName}>
-            {decoName}
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-1" title={furnitureName}>
+            {furnitureName}
           </h3>
           <p className="text-sm text-gray-500 line-clamp-2 mt-1 leading-relaxed">
-            {decoDetails}
+            {furnitureDetails}
           </p>
         </div>
 
+        {/* Footer Section (Stock, Size & Price) */}
         <div className="mt-auto pt-4 border-t border-dashed border-gray-100">
             
             <div className="flex items-center justify-between mb-3">
-                {decoSize ? (
+                {/* Size */}
+                {furnitureSize ? (
                     <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50/80 px-2.5 py-1.5 rounded-lg">
                         <Ruler size={14} className="text-gray-400" />
-                        <span className="truncate max-w-[80px]">{decoSize}</span>
+                        <span className="truncate max-w-[80px]">{furnitureSize}</span>
                     </div>
                 ) : <div></div>}
 
+                {/* Stock Indicator */}
                 <div className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg ${
                     isOutOfStock 
                       ? 'bg-red-50 text-red-600' 
@@ -148,13 +162,14 @@ const HomedecoCard = ({ item }) => {
                 </div>
             </div>
 
+            {/* Price Section */}
             <div className="flex items-center justify-between items-end">
                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pb-1">
                   Price
                 </span>
                 <div className={`text-2xl font-extrabold ${isOutOfStock ? 'text-gray-400 decoration-slice' : 'text-teal-600'}`}>
                     <span className="text-sm font-bold mr-1">LKR</span>
-                    {decoPrice}
+                    {furniturePrice}
                 </div>
             </div>
 
@@ -164,80 +179,130 @@ const HomedecoCard = ({ item }) => {
   );
 };
 
-function Homedeco() {
-  const [decoList, setDecoList] = useState([]);
+
+function Furniture() {
+  const [furnitureList, setFurnitureList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const getAllHomedeco = async () => {
+  const getAllFurniture = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/homedeco/getAllHomedeco');
-      setDecoList(response.data.content || []);
+      const response = await api.get('/furniture/getAllfurnitures');
+      setFurnitureList(response.data.content || []);
       setError(null);
     } catch (err) {
-      console.error("Error fetching deco:", err);
-      setError("Failed to load home decor items. Please check your connection.");
+      console.error("Error fetching furniture:", err);
+      setError("Failed to load furniture. Please check your connection.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getAllHomedeco();
+    getAllFurniture();
   }, []);
+
+  // --- FILTER LOGIC ---
+  const uniqueCategories = ["All", ...new Set(furnitureList.map(item => item.furnitureType).filter(Boolean))];
+
+  const filteredItems = furnitureList.filter(item => {
+    return selectedCategory === "All" || item.furnitureType === selectedCategory;
+  });
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
       
       <Hero
-        image={homedecoHeroImage}
+        image={FurnitureHeroImage}
         title={
           <>
-            Bring Life to <span className="text-amber-400">Every Space</span>
+            Comfort Meets <span className="text-amber-400">Design</span>
           </>
         }
-        subtitle="Discover charming décor pieces that make your house feel like home."
+        subtitle="Discover modern furniture made for your lifestyle."
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-12">
-          <div>
-            <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-              Decor Collection
-            </h2>
-            <p className="text-gray-500 mt-2 text-lg">
-              Showing {decoList.length} curated items
-            </p>
+        {/* --- HEADER --- */}
+        <div className="flex flex-col gap-8 mb-12">
+          
+          <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
+                Latest Collection
+              </h2>
+              <p className="text-gray-500 mt-2 text-lg">
+                Showing {filteredItems.length} items Available
+              </p>
+            </div>
           </div>
+
+          {/* Category Pills */}
+          {furnitureList.length > 0 && (
+            <div className="flex items-center gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1">
+              <div className="flex items-center gap-2 text-gray-500 font-medium mr-2 bg-white py-1.5 px-3 rounded-full shadow-sm border border-gray-100">
+                <Filter size={16} />
+                <span className="text-sm">Filter by</span>
+              </div>
+              
+              {uniqueCategories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`
+                    whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-200 border
+                    ${selectedCategory === category 
+                      ? 'bg-gray-900 text-white border-gray-900 shadow-lg shadow-gray-200/50 transform scale-105' 
+                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm'}
+                  `}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Content Grid */}
+        {/* --- GRID CONTENT --- */}
         {loading ? (
             <div className="flex flex-col items-center justify-center h-96 text-gray-500">
                 <Loader2 size={50} className="animate-spin text-teal-500 mb-6" />
-                <p className="font-semibold text-lg">Loading collection...</p>
+                <p className="font-semibold text-lg">Loading your collection...</p>
             </div>
         ) : error ? (
             <div className="flex flex-col items-center justify-center h-96 text-red-500 bg-red-50 rounded-3xl border border-red-100 p-10">
                 <AlertCircle size={50} className="mb-6" />
                 <p className="font-bold text-lg text-center max-w-md">{error}</p>
-                <button onClick={getAllHomedeco} className="mt-6 px-8 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg">
+                <button 
+                    onClick={getAllFurniture}
+                    className="mt-6 px-8 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg hover:shadow-red-200/50"
+                >
                     Try Again
                 </button>
             </div>
-        ) : decoList.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
             <div className="text-center py-32 bg-white rounded-3xl border border-gray-100 shadow-sm">
                 <Layers size={64} className="mx-auto text-gray-200 mb-6" strokeWidth={1.5} />
                 <p className="text-2xl font-bold text-gray-400">No items found</p>
+                <p className="text-gray-400 mt-3 text-lg">Try selecting a different category.</p>
+                {selectedCategory !== "All" && (
+                  <button 
+                    onClick={() => setSelectedCategory("All")}
+                    className="mt-8 px-6 py-2 text-teal-600 font-bold bg-teal-50 rounded-full hover:bg-teal-100 transition"
+                  >
+                    Clear Filters
+                  </button>
+                )}
             </div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
-                {decoList.map((item) => (
-                    <HomedecoCard key={item.id} item={item} />
+                {filteredItems.map((item) => (
+                    <FurnitureCard key={item.id} item={item} />
                 ))}
             </div>
         )}
@@ -247,4 +312,4 @@ function Homedeco() {
   );
 }
 
-export default Homedeco;
+export default Furniture;
