@@ -74,13 +74,13 @@ function FurnitureDetail() {
     }
   };
 
-  // --- UPDATED: Add To Cart Handler (Database Backed) ---
+  
   const handleAddToCart = async () => {
     const userId = localStorage.getItem('userId');
     
     if (!userId) {
       alert("Please Log in to add items to cart");
-      navigate('/login'); // Optional: redirect to login
+      navigate('/login'); 
       return;
     }
 
@@ -89,7 +89,7 @@ function FurnitureDetail() {
     const cartItem = {
         userId: parseInt(userId),
         productId: item.id,
-        productType: "FURNITURE", // Specific type for Furniture items
+        productType: "FURNITURE",
         quantity: selectedQty
     };
 
