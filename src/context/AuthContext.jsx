@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         token, 
         isAuthenticated, 
         userRole,        
-        isAdmin,         // <-- Exposed for use in protected routes and Navbar
+        isAdmin,        
         login, 
         logout 
     }}>
