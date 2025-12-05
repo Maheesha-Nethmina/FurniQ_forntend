@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
@@ -6,36 +5,40 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || null);
+  
+  // Derived state: crucial for determining user access levels
+  const isAuthenticated = !!token;
+  const userRole = user ? user.role : null;
+  // FIX: Comparing against the assumed backend value 'ADMIN' (uppercase)
+  const isAdmin = userRole === 'ADMIN'; 
 
   useEffect(() => {
-    // Check for username on initial load
+    // Load user details from local storage on initial load
     const storedToken = localStorage.getItem("token");
     const storedEmail = localStorage.getItem("userEmail");
-    const storedRole = localStorage.getItem("userRole");
-    // --- MODIFICATION ---
+    const storedRole = localStorage.getItem("userRole"); // Will store "ADMIN" or "USER"
     const storedUsername = localStorage.getItem("username"); 
 
     if (storedToken && storedEmail && storedRole && storedUsername) {
       setToken(storedToken);
-      // Add username to user object
+      // Construct the full user object
       setUser({ email: storedEmail, role: storedRole, username: storedUsername });
     }
-    // --- END MODIFICATION ---
   }, []);
 
   const login = (data) => {
-    // --- MODIFICATION ---
-    // Destructure username from login data
+    // Destructure required fields from login data
     const { token, email, role, username } = data;
+    
+    // Save to localStorage (saving the backend's role string, e.g., 'ADMIN')
     localStorage.setItem("token", token);
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userRole", role);
-    // Save username to localStorage
     localStorage.setItem("username", username);
+    
     setToken(token);
-    // Add username to user object
+    // Set the full user object
     setUser({ email, role, username });
-    // --- END MODIFICATION ---
   };
 
   const logout = () => {
@@ -45,7 +48,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ 
+        user, 
+        token, 
+        isAuthenticated, 
+        userRole,        
+        isAdmin,         // <-- Exposed for use in protected routes and Navbar
+        login, 
+        logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );
