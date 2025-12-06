@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import img01 from "../../assets/image01.jpg";
 import img02 from "../../assets/image02.jpg";
 import img03 from "../../assets/image05.jpg";
@@ -7,13 +8,16 @@ import img04 from "../../assets/image06.webp";
 import img05 from "../../assets/image07.webp";
 import img06 from "../../assets/image08.webp";
 
-
-
-
-const images = [img04,img02, img05, img06];
+const images = [img04, img02, img05, img06];
 
 export default function Mainhero_section() {
   const [current, setCurrent] = useState(0);
+  const navigate = useNavigate();
+
+  // Function to handle the button click and redirection
+  const handleShopNowClick = () => {
+    navigate("/furniture");
+  };
 
   // Auto-slide every 5 seconds
   useEffect(() => {
@@ -56,6 +60,7 @@ export default function Mainhero_section() {
         </p>
 
         <motion.button
+          onClick={handleShopNowClick}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           className="bg-amber-400 text-gray-900 text-1xl px-25 py-3 rounded-full font-medium shadow-lg hover:bg-amber-400 transition-all duration-300"
