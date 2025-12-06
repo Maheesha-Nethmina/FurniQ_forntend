@@ -3,7 +3,7 @@ import { UploadCloud, CheckCircle, AlertTriangle, Package } from 'lucide-react';
 import api from '../../api/axiosConfig';
 
 import Navbar from '../../Components/Navbar/Navbar'; 
-import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
+import AdminNavbar from '../../Components/Navbar/Adminnavbar';
 
 function AddDeco() {
   // State for all text/number inputs

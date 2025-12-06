@@ -15,7 +15,7 @@ import {
 import api from '../../api/axiosConfig'; 
 
 import Navbar from '../../Components/Navbar/Navbar';
-import AdminNavbar from '../../Components/Navbar/AdminNavbar'; 
+import AdminNavbar from '../../Components/Navbar/Adminnavbar';
 import Footer from '../../Components/Footer/Footer';
 
 function Oder_Furniture() {
