@@ -3,7 +3,6 @@
 This is the complete frontend for **FurniQ**, a full-stack e-commerce platform for a modern furniture store. This application is built with React, Vite, and React Router, and it communicates with a separate Spring Boot backend API.
 
 
-
 <img width="1891" height="939" alt="FurniQ" src="https://github.com/user-attachments/assets/869e8ae2-3e18-435f-b761-fa99d563ce6f" />
 
 
