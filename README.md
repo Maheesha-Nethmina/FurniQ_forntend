@@ -27,7 +27,7 @@ This application features a complete, secure, and personalized user experience.
 * **Product Management (CRUD):** Admins can Add, View, Edit, and Delete furniture items in the catalog.
 * **User Management:** Admins can view and manage all registered user accounts.
 * **Order Management:** Admins can view all customer orders and update their statuses (e.g., "Pending," "Shipped," "Delivered").
-
+ 
 ---
 
 ## 🎨 Design & Project Links
