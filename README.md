@@ -32,6 +32,7 @@ This application features a complete, secure, and personalized user experience.
 
 ## 🎨 Design & Project Links
 
+* **Live Demo:** [**Experience the Live Application on Render**](https://furniqfurniture.onrender.com)
 * **Figma Design:** [**View the complete UI/UX design on Figma**](https://www.figma.com/proto/NoQpT0VO8o6Nlepjo9N6j4/FurniQ?node-id=0-1&t=FWEZ14CNglEUvEYH-1)
 * **Backend Repository:** [**Find the Spring Boot API (Backend) on GitHub**](https://github.com/Maheesha-Nethmina/FurniQ_backend)
 
